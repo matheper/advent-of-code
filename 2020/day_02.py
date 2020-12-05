@@ -1,5 +1,6 @@
 """
 --- Day 2: Password Philosophy ---
+
 Your flight departs in a few days from the coastal airport; the easiest way down to the coast from here is via toboggan.
 
 The shopkeeper at the North Pole Toboggan Rental Shop is having a bad day. "Something's wrong with our computers; we can't log in!" You ask if you can take a look.
@@ -47,7 +48,8 @@ def is_valid_password_toboggan_rental(password, char, position_1, position_2):
     policy_1 = password[position_1 - 1] == char
     policy_2 = password[position_2 - 1] == char
     # parentheses are not required
-    if (policy_1 and not policy_2) or (policy_2 and not policy_1):
+    # if (policy_1 and not policy_2) or (policy_2 and not policy_1):
+    if policy_1 and not policy_2 or policy_2 and not policy_1:
         return 1
     return 0
 
@@ -62,7 +64,7 @@ def parse_input(line):
 def main():
     valid_passwords_sled_rental = 0
     valid_passwords_toboggan_rental = 0
-    with open('adventofcode_02_input.txt') as input_file:
+    with open('inputs/day_02.txt') as input_file:
         for input_ in input_file:
             parsed_inputs = parse_input(input_)
             valid_passwords_sled_rental += is_valid_password_sled_rental(*parsed_inputs)

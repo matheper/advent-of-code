@@ -1,5 +1,6 @@
 """
 --- Day 1: Report Repair ---
+
 After saving Christmas five years in a row, you've decided to take a vacation at a nice resort on a tropical island. Surely, Christmas will go on without you.
 
 The tropical island has its own currency and is entirely cash-only. The gold coins used there have a little picture of a starfish; the locals just call them stars. None of the currency exchanges seem to have heard of them, but somehow, you'll need to find fifty of these coins by the time you arrive so you can pay the deposit on your room.
@@ -32,7 +33,6 @@ Using the above example again, the three entries that sum to 2020 are 979, 366, 
 
 In your expense report, what is the product of the three entries that sum to 2020?
 
-
 https://adventofcode.com/2020/day/1
 """
 
@@ -42,7 +42,6 @@ def find_expense_entries_trio(entries, target=2020):
         for j in range(i + 1, len_):
             for k in range(j + 1, len_):
                 if entries[i] + entries[j] + entries[k] == target:
-                    print(entries[i], entries[j], entries[k])
                     return entries[i] * entries[j] * entries[k]
 
 
@@ -53,7 +52,7 @@ def find_expense_entries(entries, target=2020):
                 return entries[i] * entries[j]
 
 def main():
-    with open('adventofcode_01_input.txt') as input_file:
+    with open('inputs/day_01.txt') as input_file:
         entries = [int(i) for i in input_file]
     print(find_expense_entries(entries))
     print(find_expense_entries_trio(entries))
