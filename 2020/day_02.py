@@ -1,6 +1,7 @@
 """
 --- Day 2: Password Philosophy ---
 
+
 Your flight departs in a few days from the coastal airport; the easiest way down to the coast from here is via toboggan.
 
 The shopkeeper at the North Pole Toboggan Rental Shop is having a bad day. "Something's wrong with our computers; we can't log in!" You ask if you can take a look.
@@ -34,6 +35,7 @@ Given the same example list from above:
 1-3 b: cdefg is invalid: neither position 1 nor position 3 contains b.
 2-9 c: ccccccccc is invalid: both position 2 and position 9 contain c.
 How many passwords are valid according to the new interpretation of the policies?
+
 
 https://adventofcode.com/2020/day/2
 """
