@@ -51,11 +51,53 @@ def find_expense_entries(entries, target=2020):
             if entries[i] + entries[j] == target:
                 return entries[i] * entries[j]
 
+
+def find_expense_entries_any_size(entries, target, combination_size):
+    """
+    This function creates all possible combinations of combination_size until a valid combination is found.
+    The recursion allow combinations of any size instead of fixed `for` statements for each combination_size.
+    """
+    def _find_expenses_entries(
+            entries, target, size, entries_index,
+            temp_index, temp_list, expense_result
+    ):
+        if temp_index >= size:
+            if sum(temp_list) == target:
+                expense_result[0] = 1
+                for expense in temp_list:
+                    expense_result[0] *= expense
+                expense_result[1] = True
+            return
+        for i in range(entries_index, len(entries)):
+            if not expense_result[1]:
+                temp_list[temp_index] = entries[i]
+                _find_expenses_entries(
+                    entries=entries,
+                    target=target,
+                    size=size,
+                    entries_index=i + 1,
+                    temp_index=temp_index + 1,
+                    temp_list=temp_list,
+                    expense_result=expense_result,
+                )
+
+    temp_list = [0] * combination_size
+    expense_result = [1, False]
+    _find_expenses_entries(
+        entries, target, combination_size, 0, 0, temp_list, expense_result
+    )
+    return expense_result[0] if expense_result[1] else None
+
+
 def main():
     with open('inputs/day_01.txt') as input_file:
         entries = [int(i) for i in input_file]
     print(find_expense_entries(entries))
+    print(find_expense_entries_any_size(entries, 2020, 2))
     print(find_expense_entries_trio(entries))
+    print(find_expense_entries_any_size(entries, 2020, 3))
+    print(find_expense_entries(entries, 431424))
+    print(find_expense_entries_any_size(entries, 431424, 2))
 
 if __name__ == '__main__':
     main()
