@@ -107,21 +107,26 @@ def count_common_answers(group_forms, threshold=None):
 def main():
     with open('inputs/day_06.txt') as input_file:
         declaration_forms = input_file.read().split('\n\n')
-    group_answers_count = sum([
+
+    single_line_unique_answers_count = sum([
+        len(set(form.replace('\n', ''))) for form in declaration_forms
+    ])
+    print(single_line_unique_answers_count)
+
+    unique_answers_count = sum([
         count_unique_answers(form) for form in declaration_forms
     ])
-    print(group_answers_count)
+    print(unique_answers_count)
 
-    # answers count
-    group_answers_count = sum([
+    unique_answers_count = sum([
         count_common_answers(form, 1) for form in declaration_forms
     ])
-    print(group_answers_count)
+    print(unique_answers_count)
 
-    group_answers_count = sum([
+    group_common_answers_count = sum([
         count_common_answers(form) for form in declaration_forms
     ])
-    print(group_answers_count)
+    print(group_common_answers_count)
 
 if __name__ == '__main__':
     main()
