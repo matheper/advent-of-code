@@ -35,9 +35,13 @@ How many bag colors can eventually contain at least one shiny gold bag? (The lis
 https://adventofcode.com/2020/day/7
 """
 
+import re
+
 def parse_rule(rule):
     rule = rule.replace('contain', ',')
-    return rule.split(',')
+    rule = re.sub(r'\d+|bags|bag|\.', '', rule)
+    bags = [b.strip() for b in rule.split(',')]
+    return bags
 
 
 def count_bags(rules, bag_color):
@@ -49,19 +53,21 @@ def allow_bag_colors(luggage_rules, bag_color):
     rules = dict()
     for luggage_rule in luggage_rules:
         parsed_rule = parse_rule(luggage_rule)
+        print(parsed_rule)
         if len(parsed_rule) == 1:
             continue
-        rules[parsed_rule[1]]: parsed_rule[1:]:
+        # rules[parsed_rule[1]]: parsed_rule[1:]:
     count_bags(rules, bag_color)
     return number_of_bags
 
 
 def main():
-    with open('inputs/day_07.txt') as input_file:
-        luggage_rules = input_file.read().split('\n')
+    # with open('inputs/day_07.txt') as input_file:
+    #     luggage_rules = input_file.read().split('\n')
 
     bag_color = 'shiny gold'
     print(allow_bag_colors(luggage_rules, bag_color))
+
 
 if __name__ == '__main__':
     main()
