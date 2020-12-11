@@ -32,6 +32,33 @@ So, in this example, the number of bag colors that can eventually contain at lea
 How many bag colors can eventually contain at least one shiny gold bag? (The list of rules is quite long; make sure you get all of it.)
 
 
+--- Part Two ---
+It's getting pretty expensive to fly these days - not because of ticket prices, but because of the ridiculous number of bags you need to buy!
+
+Consider again your shiny gold bag and the rules from the above example:
+
+faded blue bags contain 0 other bags.
+dotted black bags contain 0 other bags.
+vibrant plum bags contain 11 other bags: 5 faded blue bags and 6 dotted black bags.
+dark olive bags contain 7 other bags: 3 faded blue bags and 4 dotted black bags.
+So, a single shiny gold bag must contain 1 dark olive bag (and the 7 bags within it) plus 2 vibrant plum bags (and the 11 bags within each of those): 1 + 1*7 + 2 + 2*11 = 32 bags!
+
+Of course, the actual rules have a small chance of going several levels deeper than this example; be sure to count all of the bags, even if the nesting becomes topologically impractical!
+
+Here's another example:
+
+shiny gold bags contain 2 dark red bags.
+dark red bags contain 2 dark orange bags.
+dark orange bags contain 2 dark yellow bags.
+dark yellow bags contain 2 dark green bags.
+dark green bags contain 2 dark blue bags.
+dark blue bags contain 2 dark violet bags.
+dark violet bags contain no other bags.
+In this example, a single shiny gold bag must contain 126 other bags.
+
+How many individual bags are required inside your single shiny gold bag?
+
+
 https://adventofcode.com/2020/day/7
 """
 
@@ -42,9 +69,12 @@ def parse_rules(rules):
     luggage_rules = dict()
     for rule in rules:
         rule = rule.replace('contain', ',')
+        units = re.sub(r'[^0-9]', ' ', rule)
+        units = re.sub(r' +', ' ', units)
+        units = units.strip().split(' ')
         rule = re.sub(r'\d+|bags|bag|no other|\.', '', rule)
         bags = [b.strip() for b in rule.split(',')]
-        luggage_rules[bags[0]] = {bag: 0 for bag in bags[1:] if bag}
+        luggage_rules[bags[0]] = {bag: int(unit) for bag, unit in zip(bags[1:], units) if bag}
     return luggage_rules
 
 
@@ -65,7 +95,6 @@ def count_bags(luggage_rules, bag_color, target_color, count_allow_color, visite
 
 
 def allow_bag_colors(luggage_rules, target_color):
-    number_of_bags = 0
     count_allow_color = {bag: 0 for bag in luggage_rules}
     visited = set()
     for bag_color in luggage_rules:
@@ -74,7 +103,25 @@ def allow_bag_colors(luggage_rules, target_color):
     return sum(count_allow_color.values()) - 1  # remove the target color itself
 
 
+def count_bags_inside(luggage_rules, target_color):
+    # visited = set()  # be sure to count all of the bags, even if the nesting becomes topologically impractical!
+
+    def matryoshka_bag(luggage_rules, target_color):
+        if not luggage_rules[target_color]:
+            return 1
+        # visited.add(target_color)
+        total_bags = 0
+        for bag in luggage_rules[target_color]:
+            # if bag not in visited:
+            nested_bags = luggage_rules[target_color][bag]
+            total_bags += nested_bags * matryoshka_bag(luggage_rules, bag)
+        return total_bags + 1
+    return matryoshka_bag(luggage_rules, target_color) - 1  # remove the target color itself
+
+
 def main():
+    bag_color = 'shiny gold'
+
     luggage_rules = [
         'light red bags contain 1 bright white bag, 2 muted yellow bags.',
         'dark orange bags contain 3 bright white bags, 4 muted yellow bags.',
@@ -88,14 +135,27 @@ def main():
     ]
 
     luggage_rules = parse_rules(luggage_rules)
-    bag_color = 'shiny gold'
     print(allow_bag_colors(luggage_rules, bag_color))
+    print(count_bags_inside(luggage_rules, bag_color))
+
+    luggage_rules = [
+        'shiny gold bags contain 2 dark red bags.',
+        'dark red bags contain 2 dark orange bags.',
+        'dark orange bags contain 2 dark yellow bags.',
+        'dark yellow bags contain 2 dark green bags.',
+        'dark green bags contain 2 dark blue bags.',
+        'dark blue bags contain 2 dark violet bags.',
+        'dark violet bags contain no other bags.',
+    ]
+    luggage_rules = parse_rules(luggage_rules)
+    print(allow_bag_colors(luggage_rules, bag_color))
+    print(count_bags_inside(luggage_rules, bag_color))
 
     with open('inputs/day_07.txt') as input_file:
         luggage_rules = input_file.read().split('\n')
     luggage_rules = parse_rules(luggage_rules)
-    bag_color = 'shiny gold'
     print(allow_bag_colors(luggage_rules, bag_color))
+    print(count_bags_inside(luggage_rules, bag_color))
 
 if __name__ == '__main__':
     main()
