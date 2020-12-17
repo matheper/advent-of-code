@@ -51,20 +51,54 @@ https://adventofcode.com/2020/day/13
 """
 
 def plan_bus_trip(arriving_time, bus_list):
+    bus_in_operation = [b for b in bus_list if b != 0]
     waiting_time = 0
     while True:
-        for bus_id in bus_list:
+        for bus_id in bus_in_operation:
             if (arriving_time + waiting_time) % bus_id == 0:
                 return bus_id * waiting_time
         waiting_time += 1
 
 
+def find_ordered_departour_naive(bus_list):
+    bus_map = {bus: index for index, bus in enumerate(bus_list)}
+    bus_map.pop(0)
+    longest_trip = max(bus_map.keys())
+    longest_index = bus_map[longest_trip]
+    timestamp = 0
+    ordered_departour = False
+    while not ordered_departour:
+        timestamp += longest_trip
+        ordered_departour = True
+        for bus, index in bus_map.items():
+            if (timestamp + (index - longest_index)) % bus != 0:
+                ordered_departour = False
+                break
+        if ordered_departour:
+            return timestamp - longest_index
+
+
+def find_ordered_departour_improved(bus_list):
+    bus_map = {bus: index for index, bus in enumerate(bus_list)}
+    bus_map.pop(0)
+    timestamp = 1
+    offset = 1
+    for bus, index in bus_map.items():
+        while (timestamp + index) % bus != 0:
+            timestamp += offset
+        offset *= bus
+    return timestamp
+
+
 def main():
     with open('inputs/day_13.txt') as input_file:
         timestamp = int(input_file.readline())
-        bus_list = [int(b) for b in input_file.readline().split(',') if b != 'x']
+        bus_list = [int(i) for i in input_file.readline().replace('x','0').split(',')]
 
     print(plan_bus_trip(timestamp, bus_list))
+    # print(find_ordered_departour_naive(bus_list))
+    print(find_ordered_departour_improved(bus_list))
+
 
 if __name__ == '__main__':
     main()
