@@ -1,5 +1,7 @@
 """
 --- Day 17: Conway Cubes ---
+
+
 As your flight slowly drifts through the sky, the Elves at the Mythical Information Bureau at the North Pole contact you. They'd like some help debugging a malfunctioning experimental energy source aboard one of their super-secret imaging satellites.
 
 The experimental energy source is based on cutting-edge technology: a set of Conway Cubes contained in a pocket dimension! When you hear it's having problems, you can't help but agree to take a look.
@@ -142,51 +144,319 @@ After the full six-cycle boot process completes, 112 cubes are left in the activ
 Starting with your given initial configuration, simulate six cycles. How many cubes are left in the active state after the sixth cycle?
 
 
+--- Part Two ---
+For some reason, your simulated results don't match what the experimental energy source engineers expected. Apparently, the pocket dimension actually has four spatial dimensions, not three.
+
+The pocket dimension contains an infinite 4-dimensional grid. At every integer 4-dimensional coordinate (x,y,z,w), there exists a single cube (really, a hypercube) which is still either active or inactive.
+
+Each cube only ever considers its neighbors: any of the 80 other cubes where any of their coordinates differ by at most 1. For example, given the cube at x=1,y=2,z=3,w=4, its neighbors include the cube at x=2,y=2,z=3,w=3, the cube at x=0,y=2,z=3,w=4, and so on.
+
+The initial state of the pocket dimension still consists of a small flat region of cubes. Furthermore, the same rules for cycle updating still apply: during each cycle, consider the number of active neighbors of each cube.
+
+For example, consider the same initial state as in the example above. Even though the pocket dimension is 4-dimensional, this initial state represents a small 2-dimensional slice of it. (In particular, this initial state defines a 3x3x1x1 region of the 4-dimensional space.)
+
+Simulating a few cycles from this initial state produces the following configurations, where the result of each cycle is shown layer-by-layer at each given z and w coordinate:
+
+Before any cycles:
+
+z=0, w=0
+.#.
+..#
+###
+
+
+After 1 cycle:
+
+z=-1, w=-1
+#..
+..#
+.#.
+
+z=0, w=-1
+#..
+..#
+.#.
+
+z=1, w=-1
+#..
+..#
+.#.
+
+z=-1, w=0
+#..
+..#
+.#.
+
+z=0, w=0
+#.#
+.##
+.#.
+
+z=1, w=0
+#..
+..#
+.#.
+
+z=-1, w=1
+#..
+..#
+.#.
+
+z=0, w=1
+#..
+..#
+.#.
+
+z=1, w=1
+#..
+..#
+.#.
+
+
+After 2 cycles:
+
+z=-2, w=-2
+.....
+.....
+..#..
+.....
+.....
+
+z=-1, w=-2
+.....
+.....
+.....
+.....
+.....
+
+z=0, w=-2
+###..
+##.##
+#...#
+.#..#
+.###.
+
+z=1, w=-2
+.....
+.....
+.....
+.....
+.....
+
+z=2, w=-2
+.....
+.....
+..#..
+.....
+.....
+
+z=-2, w=-1
+.....
+.....
+.....
+.....
+.....
+
+z=-1, w=-1
+.....
+.....
+.....
+.....
+.....
+
+z=0, w=-1
+.....
+.....
+.....
+.....
+.....
+
+z=1, w=-1
+.....
+.....
+.....
+.....
+.....
+
+z=2, w=-1
+.....
+.....
+.....
+.....
+.....
+
+z=-2, w=0
+###..
+##.##
+#...#
+.#..#
+.###.
+
+z=-1, w=0
+.....
+.....
+.....
+.....
+.....
+
+z=0, w=0
+.....
+.....
+.....
+.....
+.....
+
+z=1, w=0
+.....
+.....
+.....
+.....
+.....
+
+z=2, w=0
+###..
+##.##
+#...#
+.#..#
+.###.
+
+z=-2, w=1
+.....
+.....
+.....
+.....
+.....
+
+z=-1, w=1
+.....
+.....
+.....
+.....
+.....
+
+z=0, w=1
+.....
+.....
+.....
+.....
+.....
+
+z=1, w=1
+.....
+.....
+.....
+.....
+.....
+
+z=2, w=1
+.....
+.....
+.....
+.....
+.....
+
+z=-2, w=2
+.....
+.....
+..#..
+.....
+.....
+
+z=-1, w=2
+.....
+.....
+.....
+.....
+.....
+
+z=0, w=2
+###..
+##.##
+#...#
+.#..#
+.###.
+
+z=1, w=2
+.....
+.....
+.....
+.....
+.....
+
+z=2, w=2
+.....
+.....
+..#..
+.....
+.....
+After the full six-cycle boot process completes, 848 cubes are left in the active state.
+
+Starting with your given initial configuration, simulate six cycles in a 4-dimensional space. How many cubes are left in the active state after the sixth cycle?
+
+
 https://adventofcode.com/2020/day/17
 """
 
 from copy import deepcopy
 
-class CubeSpace:
-    def __init__(self, grid):
+class Space:
+    def __init__(self, grid, dimensions):
+        assert dimensions >= 3, 'Space requires at least 3 dimensions.'
         self.active_cubes = set()
+        self.dimensions = dimensions
         for y, row in enumerate(grid):
             for x, cube in enumerate(row):
                 if cube == '#':
-                    self.active_cubes.add((0, y, x))
+                    coordinate = [0,] * dimensions
+                    coordinate[-1] = x
+                    coordinate[-2] = y
+                    self.active_cubes.add(tuple(coordinate))
 
     def count_active(self):
         return len(self.active_cubes)
 
-    def get_active_neighbors(self, cube):
-        active_neighbors = 0
-        for z in range(cube[0] - 1, cube[0] + 2):
-            for y in range(cube[1] - 1, cube[1] + 2):
-                for x in range(cube[2] - 1, cube[2] + 2):
-                    if (z, y, x) != cube and (z, y, x) in self.active_cubes:
-                        active_neighbors += 1
+    def _get_active_neighbors(self, cube, coordinate, active_neighbors):
+        dimension = len(coordinate)
+        if dimension >= self.dimensions:
+            coord = tuple(coordinate)
+            if coord != cube and coord in self.active_cubes:
+                active_neighbors[0] += 1
+            return
+        for i in range(cube[dimension] - 1, cube[dimension] + 2):
+            self._get_active_neighbors(cube, coordinate + [i], active_neighbors)
         return active_neighbors
 
-    def _update_active_cube(self, cube, active_cubes):
+    def get_active_neighbors(self, cube):
+        active_neighbors = [0]
+        self._get_active_neighbors(cube, [], active_neighbors)
+        return active_neighbors[0]
+
+
+    def update_active_cube(self, cube, active_cubes):
         active_neighbors = self.get_active_neighbors(cube)
         if active_neighbors not in (2, 3):
             active_cubes.remove(cube)
 
-    def _update_inactive_neighbors(self, cube, active_cubes):
-        for z in range(cube[0] - 1, cube[0] + 2):
-            for y in range(cube[1] - 1, cube[1] + 2):
-                for x in range(cube[2] - 1, cube[2] + 2):
-                    neighbor = (z, y, x)
-                    if neighbor != cube and neighbor not in self.active_cubes:
-                        active_neighbors = self.get_active_neighbors(neighbor)
-                        if active_neighbors == 3:
-                            active_cubes.add(neighbor)
+    def _update_inactive_neighbors(self, cube, active_cubes, coordinate):
+        dimension = len(coordinate)
+        if dimension >= self.dimensions:
+            neighbor = tuple(coordinate)
+            if neighbor != cube and neighbor not in self.active_cubes:
+                active_neighbors = self.get_active_neighbors(neighbor)
+                if active_neighbors == 3:
+                    active_cubes.add(neighbor)
+            return
+        for i in range(cube[dimension] - 1, cube[dimension] + 2):
+            self._update_inactive_neighbors(cube, active_cubes, coordinate + [i])
+
+    def update_inactive_neighbors(self, cube, active_cubes):
+        self._update_inactive_neighbors(cube, active_cubes, [])
 
     def _cicle(self):
         temp_active_cubes = deepcopy(self.active_cubes)
         for cube in self.active_cubes:
-            self._update_active_cube(cube, temp_active_cubes)
-            self._update_inactive_neighbors(cube, temp_active_cubes)
+            self.update_active_cube(cube, temp_active_cubes)
+            self.update_inactive_neighbors(cube, temp_active_cubes)
         self.active_cubes = temp_active_cubes
 
     def boot(self, cicles):
@@ -198,7 +468,10 @@ class CubeSpace:
 def main():
     with open('inputs/day_17.txt') as input_file:
         initial_grid = input_file.read().splitlines()
-    space = CubeSpace(initial_grid)
+    space = Space(initial_grid, 3)
+    print(space.boot(6))
+
+    space = Space(initial_grid, 4)
     print(space.boot(6))
 
 
