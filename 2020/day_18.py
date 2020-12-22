@@ -35,6 +35,29 @@ Here are a few more examples:
 Before you can help with the homework, you need to understand it yourself. Evaluate the expression on each line of the homework; what is the sum of the resulting values?
 
 
+--- Part Two ---
+You manage to answer the child's questions and they finish part 1 of their homework, but get stuck when they reach the next section: advanced math.
+
+Now, addition and multiplication have different precedence levels, but they're not the ones you're familiar with. Instead, addition is evaluated before multiplication.
+
+For example, the steps to evaluate the expression 1 + 2 * 3 + 4 * 5 + 6 are now as follows:
+
+1 + 2 * 3 + 4 * 5 + 6
+  3   * 3 + 4 * 5 + 6
+  3   *   7   * 5 + 6
+  3   *   7   *  11
+     21       *  11
+         231
+Here are the other examples from above:
+
+1 + (2 * 3) + (4 * (5 + 6)) still becomes 51.
+2 * 3 + (4 * 5) becomes 46.
+5 + (8 * 3 + 9 + 3 * 4 * 3) becomes 1445.
+5 * 9 * (7 * 3 * 3 + 9 * 3 + (8 + 6 * 4)) becomes 669060.
+((2 + 4 * 9) * (6 + 9 * 8 + 6) + 6) + 2 + 4 * 2 becomes 23340.
+What do you get if you add up the results of evaluating the homework problems using these new rules?
+
+
 https://adventofcode.com/2020/day/18
 """
 
@@ -47,39 +70,60 @@ class StrangeMath:
             '*': lambda x, y: x * y,
         }
 
-    def _compute(self, operands, operators):
+    def _no_precedence(self, operands, operators):
         result = operands[0]
         for operand, operator in zip(operands[1:], operators):
-            result = operator(result, operand)
+            result = self.operator_map[operator](result, operand)
         return result
 
-    def calculate(self, operation, index=0):
+    def _sum_precedence(self, operands, operators):
+        while True:
+            try:
+                index = operators.index('+')
+                operands[index] = self.operator_map[operators[index]](
+                    operands[index], operands[index + 1]
+                )
+                operands.pop(index + 1)
+                operators.pop(index)
+            except ValueError:
+                break
+        result = operands.pop(0)
+        for operator in operators:
+            result = self.operator_map[operator](result, operands.pop(0))
+        return result
+
+    def _compute(self, operands, operators, precedence):
+        if precedence:
+            return self._sum_precedence(operands, operators)
+        return self._no_precedence(operands, operators)
+
+    def evaluate(self, operation, precedence, index=0):
         operands = []
         operators = []
         while index < len(operation):
             if operation[index] == '(':
-                op, index = self.calculate(operation, index + 1)
+                op, index = self.evaluate(operation, precedence, index + 1)
                 operands.append(op)
             elif operation[index] == ')':
-                return (self._compute(operands, operators), index)
+                return (self._compute(operands, operators, precedence), index)
             elif operation[index] in ('+', '*'):
-                operators.append(self.operator_map[operation[index]])
+                operators.append(operation[index])
             else:
                 operands.append(int(operation[index]))
             index += 1
-        result = self._compute(operands, operators)
+        result = self._compute(operands, operators, precedence)
         return result
 
-    def sun_results(self):
-        return sum([self.calculate(op) for op in self.operations])
+    def sun_results(self, precedence):
+        return sum([self.evaluate(op, precedence) for op in self.operations])
 
 def main():
     with open('inputs/day_18.txt') as input_file:
         operations = input_file.read().splitlines()
         operations = [i.replace(' ', '') for i in operations]
     strange_math = StrangeMath(operations)
-    print(strange_math.sun_results())
-
+    print(strange_math.sun_results(precedence=False))
+    print(strange_math.sun_results(precedence=True))
 
 if __name__ == '__main__':
     main()
