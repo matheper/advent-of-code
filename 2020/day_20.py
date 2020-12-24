@@ -164,21 +164,117 @@ To check that you've assembled the image correctly, multiply the IDs of the four
 
 Assemble the tiles into an image. What do you get if you multiply together the IDs of the four corner tiles?
 
+--- Part Two ---
+Now, you're ready to check the image for sea monsters.
+
+The borders of each tile are not part of the actual image; start by removing them.
+
+In the example above, the tiles become:
+
+.#.#..#. ##...#.# #..#####
+###....# .#....#. .#......
+##.##.## #.#.#..# #####...
+###.#### #...#.## ###.#..#
+##.#.... #.##.### #...#.##
+...##### ###.#... .#####.#
+....#..# ...##..# .#.###..
+.####... #..#.... .#......
+
+#..#.##. .#..###. #.##....
+#.####.. #.####.# .#.###..
+###.#.#. ..#.#### ##.#..##
+#.####.. ..##..## ######.#
+##..##.# ...#...# .#.#.#..
+...#..#. .#.#.##. .###.###
+.#.#.... #.##.#.. .###.##.
+###.#... #..#.##. ######..
+
+.#.#.### .##.##.# ..#.##..
+.####.## #.#...## #.#..#.#
+..#.#..# ..#.#.#. ####.###
+#..####. ..#.#.#. ###.###.
+#####..# ####...# ##....##
+#.##..#. .#...#.. ####...#
+.#.###.. ##..##.. ####.##.
+...###.. .##...#. ..#..###
+Remove the gaps to form the actual image:
+
+.#.#..#.##...#.##..#####
+###....#.#....#..#......
+##.##.###.#.#..######...
+###.#####...#.#####.#..#
+##.#....#.##.####...#.##
+...########.#....#####.#
+....#..#...##..#.#.###..
+.####...#..#.....#......
+#..#.##..#..###.#.##....
+#.####..#.####.#.#.###..
+###.#.#...#.######.#..##
+#.####....##..########.#
+##..##.#...#...#.#.#.#..
+...#..#..#.#.##..###.###
+.#.#....#.##.#...###.##.
+###.#...#..#.##.######..
+.#.#.###.##.##.#..#.##..
+.####.###.#...###.#..#.#
+..#.#..#..#.#.#.####.###
+#..####...#.#.#.###.###.
+#####..#####...###....##
+#.##..#..#...#..####...#
+.#.###..##..##..####.##.
+...###...##...#...#..###
+Now, you're ready to search for sea monsters! Because your image is monochrome, a sea monster will look like this:
+
+                  # 
+#    ##    ##    ###
+ #  #  #  #  #  #   
+When looking for this pattern in the image, the spaces can be anything; only the # need to match. Also, you might need to rotate or flip your image before it's oriented correctly to find sea monsters. In the above image, after flipping and rotating it to the appropriate orientation, there are two sea monsters (marked with O):
+
+.####...#####..#...###..
+#####..#..#.#.####..#.#.
+.#.#...#.###...#.##.O#..
+#.O.##.OO#.#.OO.##.OOO##
+..#O.#O#.O##O..O.#O##.##
+...#.#..##.##...#..#..##
+#.##.#..#.#..#..##.#.#..
+.###.##.....#...###.#...
+#.####.#.#....##.#..#.#.
+##...#..#....#..#...####
+..#.##...###..#.#####..#
+....#.##.#.#####....#...
+..##.##.###.....#.##..#.
+#...#...###..####....##.
+.#.##...#.##.#.#.###...#
+#.###.#..####...##..#...
+#.###...#.##...#.##O###.
+.O##.#OO.###OO##..OOO##.
+..O#.O..O..O.#O##O##.###
+#.#..##.########..#..##.
+#.#####..#.#...##..#....
+#....##..#.#########..##
+#...#.....#..##...###.##
+#..###....##.#...##.##.#
+Determine how rough the waters are in the sea monsters' habitat by counting the number of # that are not part of a sea monster. In the above example, the habitat's water roughness is 273.
+
+How many # are not part of a sea monster?
 
 
 https://adventofcode.com/2020/day/20
 """
 
+from copy import deepcopy
+
 class Camera:
     def __init__(self, data):
         self.tiles = self._parse(data)
+        self.full_image = self.reassemble()
     
     def _parse(self, data):
         tiles = {}
         for raw in data.split('\n\n'):
             raw_tile = raw.split('\n')
-            id_ = int(''.join(raw_tile[0].split(' ')[1][:-1]))
-            tiles[id_] = raw_tile[1:]
+            id_ = int(''.join(raw_tile[0][5:-1]))
+            tiles[id_] = list(map(list, raw_tile[1:]))
         return tiles
 
     def _get_possible_borders(self, tile):
@@ -206,12 +302,12 @@ class Camera:
                 continue
             if self._are_neighbors(self.tiles[tile], neighbor_value):
                 neighbors.append(neighbor_key)
-        return len(neighbors)
+        return neighbors
 
     def _find_corners(self):
         corners = [
             tile for tile in self.tiles
-            if self._find_neighbors(tile) == 2
+            if len(self._find_neighbors(tile)) == 2
         ]
         return corners
 
@@ -221,6 +317,91 @@ class Camera:
         for corner in corners:
             result *= corner
         return result
+    
+    def rotate(self, img):
+        return list(zip(*reversed(img)))
+
+    def _get_reflections(self, image):
+        image = deepcopy(image)
+        flip = [i[::-1] for i in image]
+        for img in (image, flip):
+            yield img  # 0
+            yield self.rotate(img)  # 90
+            yield self.rotate(self.rotate(img))  # 180
+            yield self.rotate(self.rotate(self.rotate(img)))  # 270
+
+    def reassemble(self):
+        """Reassemble the image from any tile."""
+        left = lambda x: [t[0] for t in x]
+        right = lambda x: [t[-1] for t in x]
+        def _arrange(arrangement, tile, image, y, x):
+            arrangement[tile] = (y, x, image)
+            for neighbor in self._find_neighbors(tile):
+                if neighbor not in arrangement.keys():
+                    for n_img in self._get_reflections(self.tiles[neighbor]):
+                        if n_img[-1] == image[0]:  # top
+                            _arrange(arrangement, neighbor, n_img, y - 1, x)
+                        elif n_img[0] == image[-1]:  # bottom
+                            _arrange(arrangement, neighbor, n_img, y + 1, x)
+                        elif right(n_img) == left(image):  # left
+                            _arrange(arrangement, neighbor, n_img, y, x - 1)
+                        elif left(n_img) == right(image):  # right
+                            _arrange(arrangement, neighbor, n_img, y, x + 1)
+                        else:
+                            continue
+                        break  # skip other reflections once it matches one
+
+        tile = next(iter(self.tiles.keys()))
+        image = self.tiles[tile]
+        arrangement = dict()
+        _arrange(arrangement, tile, image, 0, 0)
+
+        def _connect(full_image, tile, y):
+            tile_size = len(tile) - 2
+            for tile_y, tile_row in enumerate(tile[1:-1]):
+                y_position = tile_y + tile_size * y
+                if y_position >= len(full_image):
+                    full_image.append(list())
+                full_image[y_position] += (tile_row[1:-1])
+
+        full_image = list()
+        y_values = [p[0] for p in arrangement.values()]
+        x_values = [p[1] for p in arrangement.values()]
+        for y in range(min(y_values), max(y_values) + 1):
+            shift_y = y - min(y_values)
+            for x in range(min(x_values), max(x_values) + 1):
+                for tile, position in arrangement.items():
+                    if position[0] == y and position[1] == x:
+                        _connect(full_image, position[2], shift_y)
+        return full_image
+
+    def detect(self, pattern):
+        counter = 0
+        window_size = (len(pattern), len(pattern[0]))
+        for reflection in self._get_reflections(self.full_image):
+            for y in range(len(reflection) - window_size[0]):
+                for x in range(len(reflection[y]) - window_size[1]):
+                    detected = True
+                    for window_y in range(window_size[0]):
+                        for window_x in range(window_size[1]):
+                            if (
+                                pattern[window_y][window_x] == '#' and
+                                reflection[y + window_y][x + window_x] != '#'
+                            ):
+                                detected = False
+                                break  # stops pattern check
+                        if not detected:
+                            break  # stops pattern check
+                    if detected:
+                        counter += 1
+            if counter:  # assuming there are patters only in one reflection
+                return counter
+
+    def count_pounds(self, pattern):
+        pattern_match = self.detect(pattern)
+        image_pounds = sum([x.count('#') for x in self.full_image])
+        pattern_pounds = sum([x.count('#') for x in pattern])
+        return image_pounds - pattern_pounds * pattern_match
 
 
 def main():
@@ -228,6 +409,15 @@ def main():
         data = input_file.read()
     camera = Camera(data)
     print(camera.corners_multiplication())
+
+    sea_monster = [list(x) for x in [
+        '                  # ',
+        '#    ##    ##    ###',
+        ' #  #  #  #  #  #   ',
+    ]]
+
+    print(camera.detect(sea_monster))
+    print(camera.count_pounds(sea_monster)) 
 
 
 if __name__ == '__main__':
