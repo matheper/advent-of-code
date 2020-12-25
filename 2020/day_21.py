@@ -23,7 +23,20 @@ The first step is to determine which ingredients can't possibly contain any of t
 Determine which ingredients cannot possibly contain any of the allergens in your list. How many times do any of those ingredients appear?
 
 
-https://adventofcode.com/2020/day/15
+--- Part Two ---
+Now that you've isolated the inert ingredients, you should have enough information to figure out which ingredient contains which allergen.
+
+In the above example:
+
+mxmxvkd contains dairy.
+sqjhc contains fish.
+fvjkl contains soy.
+Arrange the ingredients alphabetically by their allergen and separate them by commas to produce your canonical dangerous ingredient list. (There should not be any spaces in your canonical dangerous ingredient list.) In the above example, this would be mxmxvkd,sqjhc,fvjkl.
+
+Time to stock your raft with supplies. What is your canonical dangerous ingredient list?
+
+
+https://adventofcode.com/2020/day/21
 """
 
 class Menu:
@@ -47,10 +60,7 @@ class Menu:
             self.ingredients.update(ingredients)
             self.allergens.update(allergens)
 
-    def contains_allergens(self):
-        pass
-
-    def allergy_safe(self):
+    def non_allergy_safe(self):
         not_safe = set()
         for allergen in list(self.allergens):
             ingredients = []
@@ -61,7 +71,10 @@ class Menu:
             for i in ingredients[1:]:
                 dangerous = dangerous.intersection(i)
             not_safe.update(dangerous)
-        safe = self.ingredients - not_safe
+        return not_safe
+
+    def allergy_safe(self):
+        safe = self.ingredients - self.non_allergy_safe()
         return safe
 
     def count_safe_ingredients(self):
@@ -72,11 +85,61 @@ class Menu:
                     counter += 1
         return counter
 
+    def map_ingredients_allergens(self):
+        allergens_map = dict()
+        safe_ingredients = self.allergy_safe()
+        not_safe_ingredients = self.non_allergy_safe()
+        # what not_safe_ingredients is not related to the allergens by item
+        inverse_map = dict()
+        # what not_safe_ingredients is not related to each allergen
+        inverse_allergen = dict()
+        for i, item in enumerate(self.items):
+            not_safe = item['ingredients'].intersection(not_safe_ingredients)
+            for allergen in item['allergens']:
+                inverse_map[i] = inverse_map.get(allergen, set())
+                inverse_map[i].update(not_safe)
+
+            inverse_map[i] = not_safe_ingredients - inverse_map[i]
+            for allergen in item['allergens']:
+                inverse_allergen[allergen] = inverse_allergen.get(
+                    allergen, set()
+                )
+                inverse_allergen[allergen].update(inverse_map[i])
+
+        def _map_ingredient_allergen(items):
+            for item in items:
+                for allergen in item['allergens']:
+                    ingredients = (
+                        item['ingredients']
+                        - safe_ingredients
+                        - inverse_allergen[allergen]
+                    )
+                    if len(ingredients) == 1:
+                        ingredient = list(ingredients)[0]
+                        allergens_map[allergen] = ingredient
+                        inverse_allergen.pop(allergen)
+                        for i in items:
+                            i['ingredients'] -= {ingredient}
+                            i['allergens'] -= {allergen}
+                        return
+
+        while inverse_allergen:
+            _map_ingredient_allergen(self.items)
+
+        return allergens_map
+
+    def get_canonical_dangerous(self):
+        map_ = self.map_ingredients_allergens()
+        canonical_list = [map_[k] for k in sorted(map_.keys())]
+        return ','.join(canonical_list)
+
+
 def main():
     with open('inputs/day_21.txt') as input_file:
         menu_items = input_file.read().splitlines()
     menu = Menu(menu_items)
     print(menu.count_safe_ingredients())
+    print(menu.get_canonical_dangerous())
 
 
 if __name__ == '__main__':
