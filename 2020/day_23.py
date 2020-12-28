@@ -76,8 +76,6 @@ Using your labeling, simulate 100 moves. What are the labels on the cups after c
 https://adventofcode.com/2020/day/23
 """
 
-from copy import deepcopy
-
 
 class Game:
     def __init__(self, data):
@@ -90,7 +88,6 @@ class Game:
     def play(self, moves, pickup_size=3):
         max_cup = max(self.cups)
         current = 0
-        current_cup = self.cups[current]
         for _ in range(moves):
             current_cup = self.cups[current]
             pickup = list()
@@ -114,6 +111,75 @@ class Game:
         return ''.join([str(i) for i in cup_labels])
 
 
+class Node:
+    def __init__(self, value):
+        self.value = value
+        self.link = None
+
+    def next(self, depth=1):
+        if depth <= 0:
+            return self
+        return self.link.next(depth - 1)
+
+    def slice(self, size):
+        if size <= 0:
+            raise ValueError('Zero or negative size is not allowed')
+        yield self
+        if size > 1:
+            yield from self.link.slice(size - 1)
+
+
+class LinkedGame:
+    def __init__(self, data, extra_cups=0):
+        self.cups, self.first_cup = self._parse(
+            data, extra_cups=extra_cups
+        )
+
+    def _parse(self, data, extra_cups):
+        data = data.replace('\n', '')
+        first_cup = Node(int(data[0]) if data else 1)
+        cups = [first_cup]
+        cups_len = 1
+        for cup in data[1:]:
+            cups.append(Node(int(cup)))
+            cups[-2].link = cups[-1]
+            cups_len += 1
+        for cup in range(cups_len + 1, extra_cups + 1):
+            cups.append(Node(int(cup)))
+            cups[-2].link = cups[-1]
+            cups_len += 1
+        cups[-1].link = cups[0]
+        cups = sorted(cups, key=lambda x: x.value)
+        return cups, first_cup
+
+    def play(self, moves, pickup_size=3):
+        max_cup = len(self.cups)
+        current_cup = self.first_cup
+        for _ in range(moves):
+            pickup = [current_cup.next(i) for i in range(1, pickup_size + 1)]
+            pickup_values = [p.value for p in pickup]
+            destination = current_cup.value - 1
+            while destination in pickup_values or destination <= 0:
+                destination -= 1
+                if destination <= 0:
+                    destination = max_cup
+            destination_cup = self.cups[destination - 1]
+            current_cup.link = pickup[-1].link
+            pickup[-1].link = destination_cup.link
+            destination_cup.link = pickup[0]
+            current_cup = current_cup.link
+
+    def labels(self):
+        cup_labels = [i.value for i in self.cups[0].slice(len(self.cups))][1:]
+        return ''.join([str(i) for i in cup_labels])
+
+    def multiply_cups(self):
+        cup_1 = self.cups[0].next(1).value
+        cup_2 = self.cups[0].next(2).value
+        print(cup_1, cup_2)
+        return cup_1 * cup_2
+
+
 def main():
     with open('inputs/day_23.txt') as input_file:
         data = input_file.read()
@@ -121,6 +187,13 @@ def main():
     game.play(100)
     print(game.labels())
 
+    game = LinkedGame(data)
+    game.play(100)
+    print(game.labels())
+
+    game = LinkedGame(data, extra_cups = 1000000)
+    game.play(10000000)
+    print(game.multiply_cups())
 
 
 if __name__ == '__main__':
