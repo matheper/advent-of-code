@@ -8,24 +8,20 @@ fn parse_input(input: &String) -> Vec<&str> {
     input.lines().map(|line|line.trim()).collect()
 }
 
+// https://citizen-stig.github.io/2020/04/04/converting-bits-to-integers-in-rust-using-generics.html
 fn convert(bits: &[i32]) -> i32 {
-    let mut result: i32 = 0;
-    bits.iter().for_each(|&bit| {
-        result <<= 1;
-        result ^= bit;
-    });
-    result
+    bits.iter()
+        .fold(0, |result, &bit| {
+            (result << 1) ^ bit
+        })
 }
 
 fn part_one(input: Vec<&str>) {
     let mut report = vec![0; input[0].len()];
     for line in input {
         for (pos, value) in line.chars().enumerate() {
-            if value == '1' {
-                report[pos] += 1;
-            } else {
-                report[pos] -= 1;
-            }
+            if value == '1' { report[pos] += 1; }
+            else { report[pos] -= 1; }
             
         };
     }
@@ -42,10 +38,50 @@ fn part_one(input: Vec<&str>) {
     println!("{}", diagnostic_report);
 }
 
+fn filter(input: Vec<&str>, value: char) -> &str{
+    let size = input[0].len();
+    let mut filtered_input: Vec<&str> = input.iter().map(|s| &**s).collect();
+    for i in 0..size {
+        let mut most_common = 0;
+        for line in &filtered_input {
+            if line.chars().nth(i).unwrap() == value { most_common += 1; }
+            else { most_common -= 1; }
+        }
+        // there are an equal number of 0 bits and 1 bits (one each). So, to find the oxygen generator rating, keep the number with a 1 in that position
+        // there are an equal number of 0 bits and 1 bits (one each). So, to find the CO2 scrubber rating, keep the number with a 0 in that position
+        if value == '1' && most_common >= 0 || value == '0' && most_common > 0 {
+            filtered_input = filtered_input.iter().filter(|x| x.chars().nth(i).unwrap() == '1').cloned().collect();
+        }
+        else {
+            filtered_input = filtered_input.iter().filter(|x| x.chars().nth(i).unwrap() == '0').cloned().collect();
+        }
+
+        if filtered_input.len() == 1{
+            println!("filtered_output{:?}", filtered_input);
+            return filtered_input[0];
+        }
+    }
+    return filtered_input[0];
+}
+
+fn part_two(input: Vec<&str>){
+    let oxygen_generator_rating = filter(input.iter().map(|s| &**s).collect(), '1'); //.parse::<i32>().unwrap();
+    let co2_scrubber_rating = filter(input.iter().map(|s| &**s).collect(), '0');
+    println!("{:?}", oxygen_generator_rating.chars().map(|d| if d == '1' {1} else {0}).collect::<Vec<i32>>());
+    let oxygen_generator_rating_int: i32 = convert(&oxygen_generator_rating.chars().map(|d| if d == '1' {1} else {0}).collect::<Vec<i32>>());
+    println!("{}", oxygen_generator_rating_int);
+    let co2_scrubber_rating_int: i32 = convert(&co2_scrubber_rating.chars().map(|d| if d == '1' {1} else {0}).collect::<Vec<i32>>());
+    println!("{}", co2_scrubber_rating_int);
+    let diagnostic_report: i64 = oxygen_generator_rating_int as i64 * co2_scrubber_rating_int as i64;
+    println!("{}", diagnostic_report);
+}
+
 pub fn run(){
     let input_data = read_input();
     let input = parse_input(&input_data);
     part_one(input);
+    let input = parse_input(&input_data);
+    part_two(input);
 }
 
 /*
