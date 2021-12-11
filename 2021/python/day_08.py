@@ -5,13 +5,18 @@ def parse(input_file):
     }
     for line in input_file:
         entries_data, outputs_data = line.split(" | ")
-        input_data["entries"].append(entries_data.split(","))
-        input_data["outputs"].append(outputs_data.split(","))
+        input_data["entries"].append(entries_data.split(" "))
+        input_data["outputs"].append(outputs_data.replace("\n", "").split(" "))
     return input_data
 
 
 def part_1(input_data):
-    print(input_data)
+    counter = 0
+    for output in input_data["outputs"]:
+        for value in output:
+            if len(value) in [2, 3, 4, 7]:
+                counter += 1
+    return counter
 
 
 def part_2(input_data):
