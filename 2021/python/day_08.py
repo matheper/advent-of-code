@@ -5,8 +5,10 @@ def parse(input_file):
     }
     for line in input_file:
         entries_data, outputs_data = line.split(" | ")
-        input_data["entries"].append(entries_data.split(" "))
-        input_data["outputs"].append(outputs_data.replace("\n", "").split(" "))
+        input_data["entries"].append(list(map(set, entries_data.split(" "))))
+        input_data["outputs"].append(
+            list(map(set, outputs_data.replace("\n", "").split(" ")))
+        )
     return input_data
 
 
@@ -19,15 +21,65 @@ def part_1(input_data):
     return counter
 
 
+def get_samples(values):
+    samples = {}
+    # 1, 4, 7, 8
+    size_to_digit = {2: 1, 3: 7, 4: 4, 7: 8}
+    for value in values:
+        digit = size_to_digit.get(len(value))
+        if digit:
+            samples[digit] = value
+        if len(samples) == 4:
+            break
+    for value in values:  # 3
+        if len(value) == 5 and len(value.intersection(samples[1])) == 2:
+            samples[3] = value
+            break
+    for value in values:  # 2
+        if len(value) == 5 and len(value - samples[3] - samples[4]) == 1:
+            samples[2] = value
+            break
+    for value in values:  # 5
+        if len(value) == 5 and len(value - samples[2]) == 2:
+            samples[5] = value
+            break
+    for value in values:  # 0
+        if len(value) == 6 and len(value - samples[5]) == 2:
+            samples[0] = value
+            break
+    for value in values:  # 9
+        if len(value) == 6 and len(value - samples[5] - samples[1]) == 0:
+            samples[9] = value
+            break
+    for value in values:  # 6
+        if len(value) == 6 and len(value.intersection(samples[1])) == 1:
+            samples[6] = value
+            break
+    return samples
+
+
+def recognize_outputs(outputs, samples):
+    value = []
+    for digit in outputs:
+        for sample in samples:
+            if samples[sample] == digit:
+                value.append(sample)
+                break
+    return int("".join(map(str, value)))
+
+
 def part_2(input_data):
-    pass
+    output_values = []
+    for entries, outputs in zip(input_data["entries"], input_data["outputs"]):
+        values = entries + outputs
+        samples = get_samples(values)
+        output = recognize_outputs(outputs, samples)
+        output_values.append(output)
+    return sum(output_values)
 
 
 def main():
-    # with open('../inputs/day_08.txt') as input_file:
-    with open(
-        "/Users/matheus/Projects/Algorithms/adventofcode/2021/inputs/day_08.txt"
-    ) as input_file:
+    with open("../inputs/day_08.txt") as input_file:
         input_data = parse(input_file)
 
     print(f"part_1: {part_1(input_data)}")
@@ -106,4 +158,55 @@ fgae cfgab fg bagce
 Because the digits 1, 4, 7, and 8 each use a unique number of segments, you should be able to tell which combinations of signals correspond to those digits. Counting only digits in the output values (the part after | on each line), in the above example, there are 26 instances of digits that use a unique number of segments (highlighted above).
 
 In the output values, how many times do digits 1, 4, 7, or 8 appear?
+
+
+--- Part Two ---
+Through a little deduction, you should now be able to determine the remaining digits. Consider again the first example above:
+
+acedgfb cdfbe gcdfa fbcad dab cefabd cdfgeb eafb cagedb ab |
+cdfeb fcadb cdfeb cdbaf
+After some careful analysis, the mapping between signal wires and segments only make sense in the following configuration:
+
+ dddd
+e    a
+e    a
+ ffff
+g    b
+g    b
+ cccc
+So, the unique signal patterns would correspond to the following digits:
+
+acedgfb: 8
+cdfbe: 5
+gcdfa: 2
+fbcad: 3
+dab: 7
+cefabd: 9
+cdfgeb: 6
+eafb: 4
+cagedb: 0
+ab: 1
+Then, the four digits of the output value can be decoded:
+
+cdfeb: 5
+fcadb: 3
+cdfeb: 5
+cdbaf: 3
+Therefore, the output value for this entry is 5353.
+
+Following this same process for each entry in the second, larger example above, the output value of each entry can be determined:
+
+fdgacbe cefdb cefbgd gcbe: 8394
+fcgedb cgb dgebacf gc: 9781
+cg cg fdcagb cbg: 1197
+efabcd cedba gadfec cb: 9361
+gecf egdcabf bgf bfgea: 4873
+gebdcfa ecba ca fadegcb: 8418
+cefg dcbef fcge gbcadfe: 4548
+ed bcgafe cdgba cbgef: 1625
+gbdfcae bgc cg cgb: 8717
+fgae cfgab fg bagce: 4315
+Adding all of the output values in this larger example produces 61229.
+
+For each entry, determine all of the wire/segment connections and decode the four-digit output values. What do you get if you add up all of the output values?
 """
