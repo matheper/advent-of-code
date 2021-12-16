@@ -5,26 +5,27 @@ def parse(input_file):
     return input_data
 
 
-def flash(input_data, i, j, total):
-    if i < 0 or j < 0 or i >= len(input_data) or j >= len(input_data[0]):
-        return
-    input_data[i][j] += 1
-    if input_data[i][j] == 11:
+def flash(input_data, i, j, total, visited):
+    if input_data[i][j] >= 10 and (i, j) not in visited:
+        visited.add((i, j))
         total[0] += 1
-        for x in range(-1, 2):
-            for y in range(-1, 2):
-                flash(input_data, i + x, j + y, total)
+        for x in range(i - 1, i + 2):
+            for y in range(j - 1, j + 2):
+                if x >= 0 and y >= 0 and x < len(input_data) and y < len(input_data[0]):
+                    input_data[x][y] += 1
+                    flash(input_data, x, y, total, visited)
 
 
 def part_1(input_data):
     flashes = [0]
     for step in range(100):
+        visited = set()
         for i, line in enumerate(input_data):
             for j, octopus in enumerate(line):
                 input_data[i][j] += 1
         for i, line in enumerate(input_data):
             for j, octopus in enumerate(line):
-                flash(input_data, i, j, flashes)
+                flash(input_data, i, j, flashes, visited)
         for i, line in enumerate(input_data):
             for j, octopus in enumerate(line):
                 if octopus >= 10:
