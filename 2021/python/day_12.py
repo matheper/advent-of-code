@@ -2,8 +2,11 @@ def parse(input_file):
     input_data = {}
     for line in input_file:
         x, y = line.strip().split("-")
-        input_data.setdefault(x, []).append(y)
-        input_data.setdefault(y, []).append(x)
+        # Do not add end to the keys neither start to the values
+        if x != "end" and y != "start":
+            input_data.setdefault(x, []).append(y)
+        if x != "start" and y != "end":
+            input_data.setdefault(y, []).append(x)
     return input_data
 
 
@@ -30,8 +33,30 @@ def part_1(input_data):
     return total[0]
 
 
+def count_paths_small_cave_twice(input_data, root, total, visited, twice):
+    if root == "end":
+        total[0] += 1
+        return
+
+    if root.islower():
+        visited.append(root)
+    for next_root in input_data.get(root, []):
+        if not twice:
+            count_paths_small_cave_twice(
+                input_data, next_root, total, visited, next_root in visited
+            )
+        elif next_root not in visited:
+            count_paths_small_cave_twice(
+                input_data, next_root, total, visited, twice
+            )
+    if root.islower():
+        visited.remove(root)
+
+
 def part_2(input_data):
-    pass
+    total = [0]
+    count_paths_small_cave_twice(input_data, "start", total, list(), False)
+    return total[0]
 
 
 def main():
@@ -142,4 +167,48 @@ start-RW
 How many paths through this cave system are there that visit small caves at most once?
 
 
+--- Part Two ---
+After reviewing the available paths, you realize you might have time to visit a single small cave twice. Specifically, big caves can be visited any number of times, a single small cave can be visited at most twice, and the remaining small caves can be visited at most once. However, the caves named start and end can only be visited exactly once each: once you leave the start cave, you may not return to it, and once you reach the end cave, the path must end immediately.
+
+Now, the 36 possible paths through the first example above are:
+
+start,A,b,A,b,A,c,A,end
+start,A,b,A,b,A,end
+start,A,b,A,b,end
+start,A,b,A,c,A,b,A,end
+start,A,b,A,c,A,b,end
+start,A,b,A,c,A,c,A,end
+start,A,b,A,c,A,end
+start,A,b,A,end
+start,A,b,d,b,A,c,A,end
+start,A,b,d,b,A,end
+start,A,b,d,b,end
+start,A,b,end
+start,A,c,A,b,A,b,A,end
+start,A,c,A,b,A,b,end
+start,A,c,A,b,A,c,A,end
+start,A,c,A,b,A,end
+start,A,c,A,b,d,b,A,end
+start,A,c,A,b,d,b,end
+start,A,c,A,b,end
+start,A,c,A,c,A,b,A,end
+start,A,c,A,c,A,b,end
+start,A,c,A,c,A,end
+start,A,c,A,end
+start,A,end
+start,b,A,b,A,c,A,end
+start,b,A,b,A,end
+start,b,A,b,end
+start,b,A,c,A,b,A,end
+start,b,A,c,A,b,end
+start,b,A,c,A,c,A,end
+start,b,A,c,A,end
+start,b,A,end
+start,b,d,b,A,c,A,end
+start,b,d,b,A,end
+start,b,d,b,end
+start,b,end
+The slightly larger example above now has 103 paths through it, and the even larger example now has 3509 paths through it.
+
+Given these new rules, how many paths through this cave system are there?
 """
