@@ -22,8 +22,28 @@ def part_1(input_data):
     return len(set(map(tuple, paper)))
 
 
+def display(paper):
+    dots = set(map(tuple, paper))
+    width = max(map(lambda x: x[0], paper)) + 1
+    height = max(map(lambda x: x[1], paper)) + 1
+    for x in range(width):
+        for y in reversed(range(height)):
+            if (x, y) in dots:
+                print("#", end="")
+            else:
+                print(" ", end="")
+        print()
+
+
 def part_2(input_data):
-    pass
+    paper, folds = input_data
+    for fold, value in folds:
+        axis = 0 if fold == "x" else 1
+        max_index = max(map(lambda x: x[axis], paper))
+        for dot in paper:
+            if dot[axis] > value:
+                dot[axis] = max_index - dot[axis]
+    display(paper)
 
 
 def main():
@@ -140,4 +160,10 @@ The instructions made a square!
 The transparent paper is pretty big, so for now, focus on just completing the first fold. After the first fold in the example above, 17 dots are visible - dots that end up overlapping after the fold is completed count as a single dot.
 
 How many dots are visible after completing just the first fold instruction on your transparent paper?
+
+
+--- Part Two ---
+Finish folding the transparent paper according to the instructions. The manual says the code is always eight capital letters.
+
+What code do you use to activate the infrared thermal imaging camera system?
 """
