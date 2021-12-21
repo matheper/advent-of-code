@@ -22,37 +22,42 @@ hexa = {
 }
 
 
-def parse_packet(packet, versions, remaining_packages=-1):
-    if not packet or remaining_packages == 0:
-        return
-    version = packet[:3]
+def parse_packet(packet, versions, i=0):
+    version = packet[i : i + 3]
     versions.append(version)
-    type_id = packet[3:6]
+    type_id = packet[i + 3 : i + 6]
+    i += 6
     if type_id == "100":
-        i = 6
         groups = []
         while True:
             last_group = packet[i] == "0"
-            groups.append(packet[i:i+5])
+            groups.append(packet[i : i + 5])
             i += 5
             if last_group:
                 break
         literal_value = "".join(g[1:] for g in groups)
-        sub_packets = packet[i:]
-        parse_packet(sub_packets, versions, remaining_packages)
+        int_value = int(literal_value, 2)
+        return i
     else:
-        length_type_id = packet[6:7]
+        length_type_id = packet[i : i + 1]
+        i += 1
         if length_type_id == "0":
-            total_length = packet[7:22]
+            total_length = packet[i : i + 15]
+            i += 15
             total_length_int = int(total_length, 2)
-            sub_packets = packet[22: 22 + total_length_int]
-            parse_packet(sub_packets, versions, remaining_packages)
+            parsed_length = 0
+            while parsed_length < total_length_int:
+                previous_i = i
+                i = parse_packet(packet, versions, i)
+                parsed_length += i - previous_i
         else:
-            num_sub_packets = packet[7:18]
-            num_sub_packets_int  = int(num_sub_packets, 2)
-            sub_packets = packet[18:]
-            parse_packet(sub_packets, versions, num_sub_packets_int)
-        
+            num_sub_packets = packet[i : i + 11]
+            i += 11
+            num_sub_packets_int = int(num_sub_packets, 2)
+            for _ in range(num_sub_packets_int):
+                i = parse_packet(packet, versions, i)
+    return i
+
 
 def part_1(input_data):
     packet = "".join([hexa[x] for x in input_data])
