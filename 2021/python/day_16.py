@@ -2,8 +2,64 @@ def parse(input_file):
     return input_file.read().strip()
 
 
+hexa = {
+    "0": "0000",
+    "1": "0001",
+    "2": "0010",
+    "3": "0011",
+    "4": "0100",
+    "5": "0101",
+    "6": "0110",
+    "7": "0111",
+    "8": "1000",
+    "9": "1001",
+    "A": "1010",
+    "B": "1011",
+    "C": "1100",
+    "D": "1101",
+    "E": "1110",
+    "F": "1111",
+}
+
+
+def parse_packet(packet, versions, remaining_packages=-1):
+    if not packet or remaining_packages == 0:
+        return
+    version = packet[:3]
+    versions.append(version)
+    type_id = packet[3:6]
+    if type_id == "100":
+        i = 6
+        groups = []
+        while True:
+            last_group = packet[i] == "0"
+            groups.append(packet[i:i+5])
+            i += 5
+            if last_group:
+                break
+        literal_value = "".join(g[1:] for g in groups)
+        sub_packets = packet[i:]
+        parse_packet(sub_packets, versions, remaining_packages)
+    else:
+        length_type_id = packet[6:7]
+        if length_type_id == "0":
+            total_length = packet[7:22]
+            total_length_int = int(total_length, 2)
+            sub_packets = packet[22: 22 + total_length_int]
+            parse_packet(sub_packets, versions, remaining_packages)
+        else:
+            num_sub_packets = packet[7:18]
+            num_sub_packets_int  = int(num_sub_packets, 2)
+            sub_packets = packet[18:]
+            parse_packet(sub_packets, versions, num_sub_packets_int)
+        
+
 def part_1(input_data):
-    pass
+    packet = "".join([hexa[x] for x in input_data])
+    versions = []
+    parse_packet(packet, versions)
+    versions = [int(v, 2) for v in versions]
+    return sum(versions)
 
 
 def part_2(input_data):
