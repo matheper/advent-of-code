@@ -4,20 +4,42 @@ def parse(input_file):
 
 
 def snailfish_explode(values, nested=0):
+    exploded = False
     i = 0
     while i < len(values):
         v = values[i]
         if isinstance(v, list):
             if nested == 3:
+                left = right = None
                 if i - 1 >= 0:
                     values[i - 1] += v[0]
+                else:
+                    left = v[0]
                 if i + 1 < len(values):
                     values[i + 1] += v[1]
+                else:
+                    right = v[1]
                 values[i] = 0
+                return left, right, True
             else:
-                snailfish_explode(v, nested + 1)
+                left, right, exploded = snailfish_explode(v, nested + 1)
+                if left is not None and i - 1 >= 0:
+                    values[i - 1] += left
+                    left = None
+                if right is not None and i + 1 < len(values):
+                    right_value = values[i + 1]
+                    if isinstance(right_value, list):
+                        while isinstance(right_value[0], list): right_value = right_value[0]
+                        right_value[0] += right
+                    else:
+                        values[i + 1] += right
+                    right = None
+                if left or right:
+                    return left, right, exploded
+        if exploded and left is None and right is None:
+            break
         i += 1
-
+    return None, None, exploded
 
 def snailfish_split(values):
     pass
@@ -53,8 +75,23 @@ def main():
     with open("2021/inputs/day_18.txt") as input_file:
         input_data = parse(input_file)
 
-    print(f"part_1: {part_1(input_data)}")
-    print(f"part_2: {part_2(input_data)}")
+    values = [[[[[9,8],1],2],3],4]
+    snailfish_explode(values)
+    assert values == [[[[0,9],2],3],4]
+    values = [7,[6,[5,[4,[3,2]]]]]
+    snailfish_explode(values)
+    assert values == [7,[6,[5,[7,0]]]]
+    values = [[6,[5,[4,[3,2]]]],1]
+    snailfish_explode(values)
+    assert values == [[6,[5,[7,0]]],3]
+    values = [[3,[2,[1,[7,3]]]],[6,[5,[4,[3,2]]]]]
+    snailfish_explode(values)
+    assert values == [[3,[2,[8,0]]],[9,[5,[4,[3,2]]]]]
+    values = [[3,[2,[8,0]]],[9,[5,[4,[3,2]]]]]
+    snailfish_explode(values)
+    assert values == [[3,[2,[8,0]]],[9,[5,[7,0]]]]
+    # print(f"part_1: {part_1(input_data)}")
+    # print(f"part_2: {part_2(input_data)}")
 
 
 if __name__ == "__main__":
