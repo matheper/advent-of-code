@@ -130,12 +130,20 @@ def snailfish_sum(left, right):
     return node
 
 
+def magnitude(snailfish_numbers):
+    if isinstance(snailfish_numbers, int):
+        return snailfish_numbers
+    left = 3 * magnitude(snailfish_numbers.left)
+    right = 2 * magnitude(snailfish_numbers.right)
+    return left + right
+
 def part_1(input_data):
     snailfish_numbers = [build_tree(i) for i in input_data]
     result = snailfish_numbers[0]
     for line in snailfish_numbers[1:]:
         result = snailfish_reduce(snailfish_sum(result, line))
     print_snailfish(result)
+    print(magnitude(result))
     return result
 
 
