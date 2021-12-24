@@ -1,69 +1,141 @@
+import math
+
+
 def parse(input_file):
     input_data = [eval(line) for line in input_file]
     return input_data
 
 
-def snailfish_explode(values, nested=0):
-    exploded = False
-    i = 0
-    while i < len(values):
-        v = values[i]
-        if isinstance(v, list):
-            if nested == 3:
-                left = right = None
-                if i - 1 >= 0:
-                    values[i - 1] += v[0]
-                else:
-                    left = v[0]
-                if i + 1 < len(values):
-                    values[i + 1] += v[1]
-                else:
-                    right = v[1]
-                values[i] = 0
-                return left, right, True
-            else:
-                left, right, exploded = snailfish_explode(v, nested + 1)
-                if left is not None and i - 1 >= 0:
-                    values[i - 1] += left
-                    left = None
-                if right is not None and i + 1 < len(values):
-                    right_value = values[i + 1]
-                    if isinstance(right_value, list):
-                        while isinstance(right_value[0], list): right_value = right_value[0]
-                        right_value[0] += right
-                    else:
-                        values[i + 1] += right
-                    right = None
-                if left or right:
-                    return left, right, exploded
-        if exploded and left is None and right is None:
-            break
-        i += 1
-    return None, None, exploded
-
-def snailfish_split(values):
-    pass
+class Node:
+    def __init__(self):
+        self.parent = None
+        self.left = None
+        self.right = None
 
 
-def snailfish_reduce(values):
+def build_tree(input_data, root=None):
+    if root is None:
+        root = Node()
+    l, r = input_data
+    if isinstance(l, list):
+        root.left = build_tree(l, Node())
+        root.left.parent = root
+    else:
+        root.left = l
+    if isinstance(r, list):
+        root.right = build_tree(r, Node())
+        root.right.parent = root
+    else:
+        root.right = r
+    return root
+
+
+def add_left(current, value):
+    parent = current.parent
+    while parent is not None and parent.left == current:
+        current = parent
+        parent = parent.parent
+    if parent is not None and isinstance(parent.left, int):
+        parent.left += value
+        return
+    if parent is not None and isinstance(parent.left, Node):
+        parent = parent.left
+    while parent is not None and isinstance(parent.right, Node):
+        parent = parent.right
+    if parent is not None:
+        parent.right += value
+
+
+def add_right(current, value):
+    parent = current.parent
+    while parent is not None and parent.right == current:
+        current = parent
+        parent = parent.parent
+    if parent is not None and isinstance(parent.right, int):
+        parent.right += value
+        return
+    if parent is not None and isinstance(parent.right, Node):
+        parent = parent.right
+    while parent is not None and isinstance(parent.left, Node):
+        parent = parent.left
+    if parent is not None:
+        parent.left += value
+
+
+def snailfish_explode(snailfish_numbers, nested=0, exploded=False):
+    l = snailfish_numbers.left
+    r = snailfish_numbers.right
+    if not exploded and isinstance(l, Node):
+        exploded = snailfish_explode(l, nested + 1)
+        if exploded:
+            return exploded
+    if nested > 3 and isinstance(l, int) and isinstance(r, int):
+        add_left(snailfish_numbers, l)
+        add_right(snailfish_numbers, r)
+        if snailfish_numbers.parent.left == snailfish_numbers:
+            snailfish_numbers.parent.left = 0
+        else:
+            snailfish_numbers.parent.right = 0
+        return True
+    if isinstance(r, Node):
+        exploded = snailfish_explode(r, nested + 1)
+    return exploded
+
+
+def value_split(parent, value):
+    node = Node()
+    node.left = math.floor(value / 2)
+    node.right = math.ceil(value / 2)
+    node.parent = parent
+    return node
+
+
+def snailfish_split(snailfish_numbers, splitted=False):
+    l = snailfish_numbers.left
+    r = snailfish_numbers.right
+    if not splitted and isinstance(l, Node):
+        splitted = snailfish_split(l)
+        if splitted:
+            return splitted
+    if isinstance(l, int) and l >= 10:
+        node = value_split(snailfish_numbers, l)
+        snailfish_numbers.left = node
+        return True
+    elif not splitted and isinstance(r, int) and r >= 10:
+        node = value_split(snailfish_numbers, r)
+        snailfish_numbers.right = node
+        return True
+    if isinstance(r, Node):
+        splitted = snailfish_split(r)
+    return splitted
+
+
+def snailfish_reduce(snailfish_numbers):
     while True:
-        exploded = snailfish_explode(values)
-        splitted = snailfish_split(values)
-        if not exploded and not splitted:
+        if snailfish_explode(snailfish_numbers):
+            continue
+        elif snailfish_split(snailfish_numbers):
+            continue
+        else:
             break
-    return values
+    return snailfish_numbers
 
 
-def snailfish_sum(v1, v2):
-    return [v1, v2]
+def snailfish_sum(left, right):
+    node = Node()
+    node.left = left
+    left.parent = node
+    node.right = right
+    right.parent = node
+    return node
 
 
 def part_1(input_data):
-    snailfish_numbers = input_data
+    snailfish_numbers = [build_tree(i) for i in input_data]
     result = snailfish_numbers[0]
-    for line in snailfish_numbers[1:-1]:
+    for line in snailfish_numbers[1:]:
         result = snailfish_reduce(snailfish_sum(result, line))
-    result = snailfish_reduce(snailfish_sum(result, snailfish_numbers[-1]))
+    print_snailfish(result)
     return result
 
 
@@ -71,26 +143,21 @@ def part_2(input_data):
     pass
 
 
+def print_snailfish(value):
+    if isinstance(value, Node):
+        print_snailfish(value.left)
+    if isinstance(value, int):
+        print(value, end=" ")
+        return
+    if isinstance(value, Node):
+        print_snailfish(value.right)
+
+
 def main():
     with open("2021/inputs/day_18.txt") as input_file:
         input_data = parse(input_file)
 
-    values = [[[[[9,8],1],2],3],4]
-    snailfish_explode(values)
-    assert values == [[[[0,9],2],3],4]
-    values = [7,[6,[5,[4,[3,2]]]]]
-    snailfish_explode(values)
-    assert values == [7,[6,[5,[7,0]]]]
-    values = [[6,[5,[4,[3,2]]]],1]
-    snailfish_explode(values)
-    assert values == [[6,[5,[7,0]]],3]
-    values = [[3,[2,[1,[7,3]]]],[6,[5,[4,[3,2]]]]]
-    snailfish_explode(values)
-    assert values == [[3,[2,[8,0]]],[9,[5,[4,[3,2]]]]]
-    values = [[3,[2,[8,0]]],[9,[5,[4,[3,2]]]]]
-    snailfish_explode(values)
-    assert values == [[3,[2,[8,0]]],[9,[5,[7,0]]]]
-    # print(f"part_1: {part_1(input_data)}")
+    print(f"part_1: {part_1(input_data)}")
     # print(f"part_2: {part_2(input_data)}")
 
 
