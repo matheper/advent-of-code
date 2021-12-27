@@ -7,48 +7,41 @@ def parse(input_file):
     return enhancement, image
 
 
-def enhancement_image(enhancement, image):
-    # print_image(image)
-    for i, line in enumerate(image):
-        image[i] = ["."] + line + ["."]
-    width = len(image[0])
-    image.insert(0, list("." * width))
-    image.append(list("." * width))
-    # print_image(image)
-    height = len(image)
-    new_image = [image[line][:] for line in range(height)]
-    # print_image(new_image)
-    for y in range(0, height - 3):
-        for x in range(0, width - 3):
-            pixels = (
-                image[y][x : x + 3] + image[y + 1][x : x + 3] + image[y + 2][x : x + 3]
-            )
-            binary = int("".join(["1" if p == "#" else "0" for p in pixels]), 2)
-            new_image[y + 1][x + 1] = enhancement[binary]
-            # print("enhancement")
-            # print(binary, new_image[y + 1][x + 1], enhancement[binary])
-            # print_image(new_image)
-    return new_image
+def enhancement_image(enhancement, pixels, dark_pixel):
+    min_y, max_y = min(p[0] for p in pixels), max(p[0] for p in pixels)
+    min_x, max_x = min(p[1] for p in pixels), max(p[1] for p in pixels)
+
+    enhanced_pixels = set()
+    for y in range(min_y - 1, max_y + 2):
+        for x in range(min_x - 1, max_x + 2):
+            index = 0
+            for di in range(y - 1, y + 2):
+                for dj in range(x - 1, x + 2):
+                    index = index << 1 | (
+                        int((di, dj) in pixels)
+                        if (min_y <= di <= max_y and min_x <= dj <= max_x)
+                        else dark_pixel
+                    )
+            if enhancement[index]:
+                enhanced_pixels.add((y, x))
+
+    return enhanced_pixels
 
 
-def print_image(image):
-    for line in image:
-        for pixel in line:
-            print(pixel, end="")
-        print()
-    print()
+def apply_enhancement_image(input_data, iterations):
+    enhancement, image = input_data
+    enhancement = [int(p == "#") for p in enhancement]
+    pixels = set(
+        (i, j) for i, line in enumerate(image) for j, p in enumerate(line) if p == "#"
+    )
+    for i in range(iterations):
+        print(i & 1 & enhancement[0])
+        pixels = enhancement_image(enhancement, pixels, i & 1 & enhancement[0])
+    return len(pixels)
 
 
 def part_1(input_data):
-    enhancement, image = input_data
-    for i in range(2):
-        image = enhancement_image(enhancement, image)
-        print_image(image)
-    lit_pixels = 0
-    for line in image:
-        for pixel in line:
-            if pixel == "#":
-                lit_pixels += 1
+    lit_pixels = apply_enhancement_image(input_data, 2)
     return lit_pixels
 
 
