@@ -4,7 +4,7 @@ def parse(input_file):
 
 
 def part_1(input_data):
-    players = input_data
+    players = input_data[:]
     scores = [0 for _ in players]
     track_size = 10
     winner = None
@@ -30,8 +30,37 @@ def part_1(input_data):
     return (sum(scores) - scores[winner]) * dice_rolls
 
 
+
+def play_recursive(positions, scores, results, player):
+    if scores[0] > 21:
+        winners = [1, 0]
+    elif scores[1] > 21:
+        winners = [0, 1]
+    else:
+        _key = f"{player}{tuple(positions)}{tuple(scores)}"
+        if _key in results:
+            winners = results[_key]
+        else:
+            winners = [0, 0]
+            for i in range(1, 4):
+                for j in range(1, 4):
+                    for k in range(1, 4):
+                        roll = i + j + k
+                        _positions = positions[:]  # copy values not reference
+                        _positions[player] = (_positions[player] + roll) % 10 or 10
+                        _scores = scores[:]  # copy values not reference
+                        _scores[player] = scores[player] + _positions[player]
+                        w = play_recursive(_positions, _scores, results, (player + 1) % 2)
+                        winners = [winners[0] + w[0], winners[1] + w[1]]
+        results[_key] = winners
+    return winners
+
+
 def part_2(input_data):
-    pass
+    players = input_data[:]
+    scores = [0 for _ in players]
+    winners = play_recursive(players, scores, {}, 0)
+    return max(winners)
 
 
 def main():
@@ -44,6 +73,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 """
 --- Day 21: Dirac Dice ---
@@ -80,4 +110,18 @@ Player 1 rolls 91+92+93 and moves to space 10 for a final score, 1000.
 Since player 1 has at least 1000 points, player 1 wins and the game ends. At this point, the losing player had 745 points and the die had been rolled a total of 993 times; 745 * 993 = 739785.
 
 Play a practice game using the deterministic 100-sided die. The moment either player wins, what do you get if you multiply the score of the losing player by the number of times the die was rolled during the game?
+
+
+--- Part Two ---
+Now that you're warmed up, it's time to play the real game.
+
+A second compartment opens, this time labeled Dirac dice. Out of it falls a single three-sided die.
+
+As you experiment with the die, you feel a little strange. An informational brochure in the compartment explains that this is a quantum die: when you roll it, the universe splits into multiple copies, one copy for each possible outcome of the die. In this case, rolling the die always splits the universe into three copies: one where the outcome of the roll was 1, one where it was 2, and one where it was 3.
+
+The game is played the same as before, although to prevent things from getting too far out of hand, the game now ends when either player's score reaches at least 21.
+
+Using the same starting positions as in the example above, player 1 wins in 444356092776315 universes, while player 2 merely wins in 341960390180808 universes.
+
+Using your given starting positions, determine every possible outcome. Find the player that wins in more universes; in how many universes does that player win?
 """
