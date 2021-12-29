@@ -32,9 +32,9 @@ def part_1(input_data):
 
 
 def play_recursive(positions, scores, results, player):
-    if scores[0] > 21:
+    if scores[0] >= 21:
         winners = [1, 0]
-    elif scores[1] > 21:
+    elif scores[1] >= 21:
         winners = [0, 1]
     else:
         _key = f"{player}{tuple(positions)}{tuple(scores)}"
@@ -52,7 +52,7 @@ def play_recursive(positions, scores, results, player):
                         _scores[player] = scores[player] + _positions[player]
                         w = play_recursive(_positions, _scores, results, (player + 1) % 2)
                         winners = [winners[0] + w[0], winners[1] + w[1]]
-        results[_key] = winners
+            results[_key] = winners
     return winners
 
 
