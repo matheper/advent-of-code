@@ -9,40 +9,97 @@ def parse_input():
     return scanners
 
 
-def rotate(beacon):
-    x, y, z = beacon
-    rotates = [
-        (x, y, z),
-        (-y, x, z),
-        (-x, -y, z),
-        (y, -x, z),
-        (-z, y, x),
-        (-y, -z, x),
-        (z, -y, x),
-        (y, z, x),
-        (-x, y, -z),
-        (-y, -x, -z),
-        (x, -y, -z),
-        (y, x, -z),
-        (z, y, -x),
-        (-y, z, -x),
-        (-z, -y, -x),
-        (y, -z, -x),
-        (x, -z, y),
-        (z, x, y),
-        (-x, z, y),
-        (-z, -x, y),
-        (x, z, -y),
-        (-z, x, -y),
-        (-x, -z, -y),
-        (z, -x, -y),
-    ]
-    for r in rotates:
-        yield r
+def rotate(scanner):
+    def rotations(coord, i):
+        x, y, z = coord
+        rotates = [
+            (x, y, z),
+            (-y, x, z),
+            (-x, -y, z),
+            (y, -x, z),
+            (-z, y, x),
+            (-y, -z, x),
+            (z, -y, x),
+            (y, z, x),
+            (-x, y, -z),
+            (-y, -x, -z),
+            (x, -y, -z),
+            (y, x, -z),
+            (z, y, -x),
+            (-y, z, -x),
+            (-z, -y, -x),
+            (y, -z, -x),
+            (x, -z, y),
+            (z, x, y),
+            (-x, z, y),
+            (-z, -x, y),
+            (x, z, -y),
+            (-z, x, -y),
+            (-x, -z, -y),
+            (z, -x, -y),
+        ]
+        return rotates[i]
+
+    n_rotations = 24
+    for i in range(n_rotations):
+        rotated_scanner = [rotations(b, i) for b in scanner]
+        yield rotated_scanner
+
+
+def find_vector(coord_1, coord_2):
+    x1, y1, z1 = coord_1
+    x2, y2, z2 = coord_2
+    return (x1 - x2, y1 - y2, z1 - z2)
+
+
+def manhattan_distance(coord_1, coord_2):
+    x, y, z = find_vector(coord_1, coord_2)
+    return abs(x) + abs(y) + abs(z)
+
+def calculate_all_distances(scanner):
+    distances = []
+    for a in scanner:
+        for b in scanner:
+            if a != b:
+                distances.append(manhattan_distance(a, b))
+    return distances
+
+def find_overlaps(scanner_a, scanner_b, min_match=12):
+    overlaps = 0
+    dist_a = calculate_all_distances(scanner_a)
+    dist_b = calculate_all_distances(scanner_b)
+    overlaps = set(dist_a).intersection(dist_b)
+    if len(overlaps) >= min_match:
+        return True
+    return False
+
+
+def align_scanner(scanner, offset):
+    xo, yo, zo = offset
+    aligned_scanner = []
+    for x, y, z in scanner:
+        aligned_scanner.append((x + xo, y + yo, z + zo))
+    return aligned_scanner
+
+
+def find_and_align(scanners):
+    anchor_scanner = scanners.pop(0)
+    aligned_beacons = anchor_scanner[:]
+    while scanners:
+        current_scanner = scanners.pop(0)
+        overlap = False
+        for rotated_scanner in rotate(current_scanner):
+            if find_overlaps(aligned_beacons, rotated_scanner):
+                pass
+                # offset_vec = find_vector(*overlap)
+                # aligned_scanner = align_scanner(rotated_scanner, offset_vec)
+                # aligned_beacons.extends(aligned_scanner)
+        if not overlap:
+            scanners.append(current_scanner)
 
 
 def part_1(scanners):
-    min_match = 12
+    find_and_align(scanners)
 
 
 def part_2(input_data):
