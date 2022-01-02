@@ -53,19 +53,19 @@ def manhattan_distance(coord_1, coord_2):
     return abs(x1 - x2) + abs(y1 - y2) + abs(z1 - z2)
 
 
-def calculate_all_distances(scanner_a, scanner_b):
-    distances = []
-    for a in scanner_a:
-        for b in scanner_b:
-            distances.append(manhattan_distance(a, b))
+def calculate_all_distances(scanner):
+    distances = set()
+    for a in scanner:
+        for b in scanner:
+            distances.add(manhattan_distance(a, b))
     return distances
 
 
 def are_overlapping(scanner_a, scanner_b, min_match=66):
     overlaps = 0
-    dist_a = calculate_all_distances(scanner_a, scanner_a)
-    dist_b = calculate_all_distances(scanner_b, scanner_b)
-    overlaps = set(dist_a).intersection(dist_b)
+    dist_a = calculate_all_distances(scanner_a)
+    dist_b = calculate_all_distances(scanner_b)
+    overlaps = dist_a.intersection(dist_b)
     if len(overlaps) >= min_match:
         return True
     return False
@@ -124,12 +124,16 @@ def part_1(input_data):
 
 
 def part_2(input_data):
-    pass
+    offsets, _ = find_and_align(input_data[:])
+    distances = []
+    for a in offsets:
+        for b in offsets:
+            distances.append(manhattan_distance(a, b))
+    return max(distances)
 
 
 def main():
     input_data = parse_input()
-
     print(f"part_1: {part_1(input_data)}")
     print(f"part_2: {part_2(input_data)}")
 
@@ -492,4 +496,12 @@ The full list of beacons (relative to scanner 0) is:
 In total, there are 79 beacons.
 
 Assemble the full map of beacons. How many beacons are there?
+
+
+--- Part Two ---
+Sometimes, it's a good idea to appreciate just how big the ocean is. Using the Manhattan distance, how far apart do the scanners get?
+
+In the above example, scanners 2 (1105,-1205,1229) and 3 (-92,-2380,-20) are the largest Manhattan distance apart. In total, they are 1197 + 1175 + 1249 = 3621 units apart.
+
+What is the largest Manhattan distance between any two scanners?
 """
