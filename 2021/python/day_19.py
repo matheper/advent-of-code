@@ -11,6 +11,7 @@ def parse_input():
 
 def rotate(scanner):
     def rotations(coord, i):
+        # https://imgur.com/a/g1JVC3F
         x, y, z = coord
         rotates = [
             (x, y, z),
@@ -56,6 +57,7 @@ def manhattan_distance(coord_1, coord_2):
     x, y, z = find_vector(coord_1, coord_2)
     return abs(x) + abs(y) + abs(z)
 
+
 def calculate_all_distances(scanner):
     distances = []
     for a in scanner:
@@ -64,42 +66,72 @@ def calculate_all_distances(scanner):
                 distances.append(manhattan_distance(a, b))
     return distances
 
-def find_overlaps(scanner_a, scanner_b, min_match=12):
+
+def find_distance_overlaps(scanner_a, scanner_b, min_match=66):
     overlaps = 0
     dist_a = calculate_all_distances(scanner_a)
     dist_b = calculate_all_distances(scanner_b)
     overlaps = set(dist_a).intersection(dist_b)
     if len(overlaps) >= min_match:
-        return True
-    return False
+        return overlaps
+    return None
 
 
-def align_scanner(scanner, offset):
-    xo, yo, zo = offset
-    aligned_scanner = []
-    for x, y, z in scanner:
-        aligned_scanner.append((x + xo, y + yo, z + zo))
-    return aligned_scanner
+# def align_scanner(scanner, offset):
+#     xo, yo, zo = offset
+#     aligned_scanner = []
+#     for x, y, z in scanner:
+#         aligned_scanner.append((x + xo, y + yo, z + zo))
+#     return aligned_scanner
+
+
+def find_offset(archor_scanner, scanner_to_align, min_match=12):
+    # find correct rotation by counting how many beacons share the same distance offset
+    for rotated_scanner in rotate(scanner_to_align):
+        distances = []
+        for a in archor_scanner:
+            for b in rotated_scanner:
+                distances.append(manhattan_distance(a, b))
+        count_distances = {i: distances.count(i) for i in distances}
+        for relative_distance, counter in count_distances.items():
+            if counter >= min_match:
+                break
+    for a in archor_scanner:
+        for b in rotated_scanner:
+            if manhattan_distance(a, b) == relative_distance:
+                offset = (a[0] - b[0], a[1] - b[1], a[2] - b[2])
+    return offset
+
 
 
 def find_and_align(scanners):
-    anchor_scanner = scanners.pop(0)
-    aligned_beacons = anchor_scanner[:]
+    current_idx = 0
+    current_scanner = scanners.pop(current_idx)
+    # all scanners are aligned based on the first one
+    aligned_scanners = [current_scanner]
+    beacons_counter = len(current_scanner)
+    offsets = []
     while scanners:
-        current_scanner = scanners.pop(0)
-        overlap = False
-        for rotated_scanner in rotate(current_scanner):
-            if find_overlaps(aligned_beacons, rotated_scanner):
-                pass
-                # offset_vec = find_vector(*overlap)
-                # aligned_scanner = align_scanner(rotated_scanner, offset_vec)
-                # aligned_beacons.extends(aligned_scanner)
-        if not overlap:
-            scanners.append(current_scanner)
+        test_idx = 0
+        while test_idx < len(scanners):
+            distance_overlaps = find_distance_overlaps(current_scanner, scanners[test_idx])
+            if distance_overlaps:
+                neighbour_scanner = scanners.pop(test_idx)
+                offset = find_offset(current_scanner, neighbour_scanner)
+                offsets.append(offset)
+                aligned_scanners.append(neighbour_scanner)
+                # beacons_counter += len(neighbour_scanner) - aligned_beacons
+            else:
+                test_idx += 1
+        current_idx += 1
+        current_idx = current_idx % len(aligned_scanners)
+        current_scanner = aligned_scanners[current_idx]
+    # return beacons_counter
+    return offsets
 
 
 def part_1(scanners):
-    find_and_align(scanners)
+    return find_and_align(scanners)
 
 
 def part_2(input_data):
