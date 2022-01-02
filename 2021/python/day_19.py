@@ -47,91 +47,80 @@ def rotate(scanner):
         yield rotated_scanner
 
 
-def find_vector(coord_1, coord_2):
+def manhattan_distance(coord_1, coord_2):
     x1, y1, z1 = coord_1
     x2, y2, z2 = coord_2
-    return (x1 - x2, y1 - y2, z1 - z2)
+    return abs(x1 - x2) + abs(y1 - y2) + abs(z1 - z2)
 
 
-def manhattan_distance(coord_1, coord_2):
-    x, y, z = find_vector(coord_1, coord_2)
-    return abs(x) + abs(y) + abs(z)
-
-
-def calculate_all_distances(scanner):
+def calculate_all_distances(scanner_a, scanner_b):
     distances = []
-    for a in scanner:
-        for b in scanner:
-            if a != b:
-                distances.append(manhattan_distance(a, b))
+    for a in scanner_a:
+        for b in scanner_b:
+            distances.append(manhattan_distance(a, b))
     return distances
 
 
-def find_distance_overlaps(scanner_a, scanner_b, min_match=66):
+def are_overlapping(scanner_a, scanner_b, min_match=66):
     overlaps = 0
-    dist_a = calculate_all_distances(scanner_a)
-    dist_b = calculate_all_distances(scanner_b)
+    dist_a = calculate_all_distances(scanner_a, scanner_a)
+    dist_b = calculate_all_distances(scanner_b, scanner_b)
     overlaps = set(dist_a).intersection(dist_b)
     if len(overlaps) >= min_match:
-        return overlaps
-    return None
+        return True
+    return False
 
 
-# def align_scanner(scanner, offset):
-#     xo, yo, zo = offset
-#     aligned_scanner = []
-#     for x, y, z in scanner:
-#         aligned_scanner.append((x + xo, y + yo, z + zo))
-#     return aligned_scanner
+def align_scanner(scanner, offset):
+    aligned_beacons = []
+    for beacon in scanner:
+        aligned = (beacon[0] + offset[0], beacon[1] + offset[1], beacon[2] + offset[2])
+        aligned_beacons.append(aligned)
+    return aligned_beacons
 
 
 def find_offset(archor_scanner, scanner_to_align, min_match=12):
     # find correct rotation by counting how many beacons share the same distance offset
     for rotated_scanner in rotate(scanner_to_align):
-        distances = []
+        offsets = {}
         for a in archor_scanner:
             for b in rotated_scanner:
-                distances.append(manhattan_distance(a, b))
-        count_distances = {i: distances.count(i) for i in distances}
-        for relative_distance, counter in count_distances.items():
-            if counter >= min_match:
-                break
-    for a in archor_scanner:
-        for b in rotated_scanner:
-            if manhattan_distance(a, b) == relative_distance:
                 offset = (a[0] - b[0], a[1] - b[1], a[2] - b[2])
-    return offset
-
+                offsets[offset] = offsets.get(offset, 0) + 1
+                if offsets[offset] >= min_match:
+                    aligned_scanner = align_scanner(rotated_scanner, offset)
+                    return aligned_scanner, offset
 
 
 def find_and_align(scanners):
+    # all beacons are aligned based on the first one
     current_idx = 0
     current_scanner = scanners.pop(current_idx)
-    # all scanners are aligned based on the first one
     aligned_scanners = [current_scanner]
-    beacons_counter = len(current_scanner)
-    offsets = []
+    aligned_beacons = set(current_scanner)
+    offsets = [(0, 0, 0)]
     while scanners:
         test_idx = 0
         while test_idx < len(scanners):
-            distance_overlaps = find_distance_overlaps(current_scanner, scanners[test_idx])
-            if distance_overlaps:
+            if are_overlapping(current_scanner, scanners[test_idx]):
                 neighbour_scanner = scanners.pop(test_idx)
-                offset = find_offset(current_scanner, neighbour_scanner)
+                aligned_scanner, offset = find_offset(
+                    current_scanner, neighbour_scanner
+                )
+                aligned_scanners.append(aligned_scanner)
                 offsets.append(offset)
-                aligned_scanners.append(neighbour_scanner)
-                # beacons_counter += len(neighbour_scanner) - aligned_beacons
+                aligned_beacons.update(set(aligned_scanner))
             else:
                 test_idx += 1
         current_idx += 1
         current_idx = current_idx % len(aligned_scanners)
         current_scanner = aligned_scanners[current_idx]
-    # return beacons_counter
-    return offsets
+    return offsets, aligned_beacons
 
 
-def part_1(scanners):
-    return find_and_align(scanners)
+def part_1(input_data):
+    _, aligned_beacons = find_and_align(input_data[:])
+    return len(aligned_beacons)
 
 
 def part_2(input_data):
