@@ -1,11 +1,26 @@
 def parse_input():
     input_data = []
     with open("2021/inputs/day_22.txt") as input_file:
-        pass
+        for line in input_file:
+            action, coord = line.strip().split(" ")
+            x, y, z = coord.split(",")
+            x1, x2 = map(int, x.split("=")[1].split(".."))
+            y1, y2 = map(int, y.split("=")[1].split(".."))
+            z1, z2 = map(int, z.split("=")[1].split(".."))
+            input_data.append((action, (x1, x2), (y1, y2), (z1, z2)))
     return input_data
 
+
 def part_1(input_data):
-    pass
+    cubes = {}
+    for action, (x1, x2), (y1, y2), (z1, z2) in input_data:
+        if x1 >= -50 and x2 <= 50 and y1 >= -50 and y2 <= 50 and z1 >= -50 and z2 <= 50:
+            action_value = 1 if action == "on" else 0
+            for x in range(x1, x2 + 1):
+                for y in range(y1, y2 + 1):
+                    for z in range(z1, z2 + 1):
+                        cubes[(x, y, z)] = action_value
+    return sum(cubes.values())
 
 
 def part_2(input_data):
@@ -127,6 +142,4 @@ on x=967..23432,y=45373..81175,z=27513..53682
 The last two steps are fully outside the initialization procedure area; all other steps are fully within it. After executing these steps in the initialization procedure region, 590784 cubes are on.
 
 Execute the reboot steps. Afterward, considering only cubes in the region x=-50..50,y=-50..50,z=-50..50, how many cubes are on?
-
-
 """
