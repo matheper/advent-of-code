@@ -5,12 +5,32 @@ def parse_input():
     return input_data
 
 
-def alu(instruction):
-    pass
+def alu(command):
+    instructions = {
+        "inp": lambda a: a,
+        "add": lambda a, b: a + b,
+        "mul": lambda a, b: a * b,
+        "div": lambda a, b: a // b,
+        "mod": lambda a, b: a % b,
+        "eql": lambda a, b: int(a == b),
+    }
+    instruction = command[0]
+    parameters = command[1:]
+    return instructions[instruction](*parameters)
 
 
 def part_1(input_data):
-    pass
+    test = [
+        ["inp", 10],
+        ["add", 10, 2],
+        ["mul", 10, 2],
+        ["div", 10, 2],
+        ["mod", 5, 2],
+        ["mod", 2, 2],
+        ["eql", 5, 2],
+        ["eql", 2, 2],
+    ]
+    return [alu(x) for x in test]
 
 
 def part_2(input_data):
