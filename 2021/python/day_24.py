@@ -1,36 +1,62 @@
 def parse_input():
     input_data = []
     with open("2021/inputs/day_24.txt") as input_file:
-        input_data = [line.strip().split(" ") for line in input_file]
+        for line in input_file:
+            command = line.strip().split(" ")
+            if len(command) <= 2:
+                command.append("-")
+            value = []
+            for op in command:
+                try:
+                    value.append(int(op))
+                except:
+                    value.append(op)
+            input_data.append(value)
     return input_data
 
 
-def alu(command):
+def run(instruction, a, b):
     instructions = {
-        "inp": lambda a: a,
+        "inp": lambda a, b: b,
         "add": lambda a, b: a + b,
         "mul": lambda a, b: a * b,
         "div": lambda a, b: a // b,
         "mod": lambda a, b: a % b,
         "eql": lambda a, b: int(a == b),
     }
-    instruction = command[0]
-    parameters = command[1:]
-    return instructions[instruction](*parameters)
+    return instructions[instruction](a, b)
+
+
+def alu(commands, model_number):
+    variables = {
+        "w": 0,
+        "x": 0,
+        "y": 0,
+        "z": 0,
+    }
+    index = 0
+    for instruction, key_a, key_b in commands:
+        a = variables[key_a]
+        if key_b == "-":
+            b = model_number[index]
+            index += 1
+        else:
+            b = variables.get(key_b, key_b)
+        variables[key_a] = run(instruction, a, b)
+    return variables
 
 
 def part_1(input_data):
-    test = [
-        ["inp", 10],
-        ["add", 10, 2],
-        ["mul", 10, 2],
-        ["div", 10, 2],
-        ["mod", 5, 2],
-        ["mod", 2, 2],
-        ["eql", 5, 2],
-        ["eql", 2, 2],
-    ]
-    return [alu(x) for x in test]
+    for number in range(99999999999999, 0, -1):
+        if number % 1000 == 0:
+            print(number)
+        model_number = list(map(int, str(number)))
+        if 0 in model_number:
+            continue
+        result = alu(input_data, model_number)
+        if result["z"] == 0:
+            return number
+    return -1
 
 
 def part_2(input_data):
