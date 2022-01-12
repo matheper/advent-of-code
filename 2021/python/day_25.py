@@ -19,31 +19,25 @@ def part_1(input_data):
     while moving:
         moving = False
         new_map = _copy(current_map)
-        if moves % 2 == 0:  # east
-            for i in range(height):
-                for j in range(width):
-                    if current_map[i][j] == "v":
-                        new_i = (i + 1) % height
-                        if new_map[new_i][j] == ".":
-                            new_map[new_i][j] = "v"
-                            new_map[i][j] = "."
-                            moving = True
-        else:  # south
-            for i in range(height):
-                for j in range(width):
-                    if current_map[i][j] == ">":
-                        new_j = (j + 1) % width
-                        if new_map[i][new_j] == ".":
-                            new_map[i][new_j] = ">"
-                            new_map[i][j] = "."
-                            moving = True
+        for i in range(height):
+            for j in range(width):
+                if current_map[i][j] == ">":
+                    new_j = (j + 1) % width
+                    if current_map[i][new_j] == ".":
+                        new_map[i][new_j] = ">"
+                        new_map[i][j] = "."
+                        moving = True
+        current_map = _copy(new_map)
+        for i in range(height):
+            for j in range(width):
+                if current_map[i][j] == "v":
+                    new_i = (i + 1) % height
+                    if current_map[new_i][j] == ".":
+                        new_map[new_i][j] = "v"
+                        new_map[i][j] = "."
+                        moving = True
         current_map = _copy(new_map)
         moves += 1
-        print(moves)
-        for i in current_map:
-            for j in i:
-                print(j, end="")
-            print()
     return moves
 
 
