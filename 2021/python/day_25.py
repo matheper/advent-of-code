@@ -1,12 +1,50 @@
 def parse_input():
     input_data = []
     with open("2021/inputs/day_25.txt") as input_file:
-        pass
+        for line in input_file:
+            input_data.append([i for i in line.strip()])
     return input_data
 
 
+def _copy(data):
+    return [i[:] for i in data]
+
+
 def part_1(input_data):
-    pass
+    current_map = _copy(input_data)
+    height = len(current_map)
+    width = len(current_map[0])
+    moves = 0
+    moving = True
+    while moving:
+        moving = False
+        new_map = _copy(current_map)
+        if moves % 2 == 0:  # east
+            for i in range(height):
+                for j in range(width):
+                    if current_map[i][j] == "v":
+                        new_i = (i + 1) % height
+                        if new_map[new_i][j] == ".":
+                            new_map[new_i][j] = "v"
+                            new_map[i][j] = "."
+                            moving = True
+        else:  # south
+            for i in range(height):
+                for j in range(width):
+                    if current_map[i][j] == ">":
+                        new_j = (j + 1) % width
+                        if new_map[i][new_j] == ".":
+                            new_map[i][new_j] = ">"
+                            new_map[i][j] = "."
+                            moving = True
+        current_map = _copy(new_map)
+        moves += 1
+        print(moves)
+        for i in current_map:
+            for j in i:
+                print(j, end="")
+            print()
+    return moves
 
 
 def part_2(input_data):
