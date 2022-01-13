@@ -46,7 +46,7 @@ def alu(commands, model_number):
     return variables
 
 
-def part_1(input_data):
+def part_1_forever(input_data):
     for number in range(99999999999999, 0, -1):
         if number % 1000 == 0:
             print(number)
@@ -58,6 +58,16 @@ def part_1(input_data):
             return number
     return -1
 
+def part_1(input_data):
+    """
+    Seems there are 14 blocks with 18 almost repeated instructions each.
+    Instruction 5 (div z 1) varies with values 1 or 26.
+    Instruction 6 (add x 14) varies with an integer that seems not following any order.
+    Instruction 16 (add y 12) varies with an integer that seems not following any order.
+    All other instructions are repeted. All inputs are read to w.
+    Z is the only variable carried over the steps (maybe y too?).
+    """
+    pass
 
 def part_2(input_data):
     pass
