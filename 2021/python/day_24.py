@@ -60,12 +60,34 @@ def part_1_forever(input_data):
 
 def part_1(input_data):
     """
-    Seems there are 14 blocks with 18 almost repeated instructions each.
+    There are 14 blocks with 18 almost repeated instructions each.
     Instruction 5 (div z 1) varies with values 1 or 26.
     Instruction 6 (add x 14) varies with an integer that seems not following any order.
     Instruction 16 (add y 12) varies with an integer that seems not following any order.
     All other instructions are repeted. All inputs are read to w.
-    Z is the only variable carried over the steps (maybe y too?).
+    Z is the only variable carried over the steps.
+
+                    w  x         y     z
+                    0  0         0     z <- zero at the beginning, but carried over for the next blocks
+    inp w           w  0         0     z
+    mul x 0         w  0         0     z
+    add x z         w  z         0     z
+    mod x 26        w  z%26      0     z
+    div z 1         w  z%26      0     z
+    add x 14        w  (z%26)+14 0     z
+    eql x w         w  0         0     z
+    eql x 0         w  1         0     z
+    mul y 0         w  1         0     z
+    add y 25        w  1         25    z
+    mul y x         w  1         25    z
+    add y 1         w  1         26    z
+    mul z y         w  1         26    26z
+    mul y 0         w  1         0     26z
+    add y w         w  1         w     26z
+    add y 12        w  1         w+12  26z
+    mul y x         w  1         w+12  26z
+    add z y         w  1         w+12  26z+w+12
+
     """
     pass
 
