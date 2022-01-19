@@ -63,7 +63,46 @@ def part_1_forever(input_data):
             return number
     return -1
 
+
+def solve(input_data, numbers):
+    values = []
+    for i in range(0, len(input_data), 18):
+        values.append((input_data[i + 5][2], input_data[i + 15][2]))
+
+    for digits in numbers:
+        digits = iter(digits)
+        pin = [0 if v < 9 else next(digits) for v, _ in values]
+        z = 0
+        for i, w in enumerate(pin):
+            v1, v2 = values[i]
+            if v1 > 9:
+                z = z * 26 + w + v2
+            else:
+                pin[i] = (z % 26) + v1
+                if not (0 < pin[i] < 10):
+                    break
+                z = z // 26
+        if z == 0:
+            return "".join(map(str, pin))
+
+
 def part_1(input_data):
+    numbers = product(range(9, 0, -1), repeat=7)
+    return solve(input_data, numbers)
+
+
+def part_2(input_data):
+    numbers = product(range(1, 10), repeat=7)
+    return solve(input_data, numbers)
+
+
+def main():
+    input_data = parse_input()
+
+    print(f"part_1: {part_1(input_data)}")
+    print(f"part_2: {part_2(input_data)}")
+
+    # print(f"part_1: {part_1_forever(input_data)}")
     """
     There are 14 blocks with 18 almost repeated instructions each.
     Instruction 5 (div z 1) varies with values 1 or 26.
@@ -100,39 +139,6 @@ def part_1(input_data):
 
     Conditions are applied digit by digit (inp w for each block of instructions)
     """
-    values = []
-    for i in range(0, len(input_data), 18):
-        values.append((input_data[i + 5][2], input_data[i + 15][2]))
-
-    numbers = product(range(9, 0, -1), repeat=7)
-    for digits in numbers:
-        digits = iter(digits)
-        pin = [0 if v < 9 else next(digits) for v, _ in values]
-        z = 0
-        for i, w in enumerate(pin):
-            v1, v2 = values[i]
-            if v1 > 9:
-                z = z * 26 + w + v2
-            else:
-                pin[i] = (z % 26) + v1
-                if not (0 < pin[i] < 10):
-                    break
-                z = z // 26
-        if z == 0:
-            return ''.join(map(str, pin))
-    
-
-def part_2(input_data):
-    pass
-
-
-def main():
-    input_data = parse_input()
-
-    # print(f"part_1: {part_1_forever(input_data)}")
-    
-    print(f"part_1: {part_1(input_data)}")
-    print(f"part_2: {part_2(input_data)}")
 
 
 if __name__ == "__main__":
@@ -194,4 +200,10 @@ Then, after MONAD has finished running all of its instructions, it will indicate
 MONAD imposes additional, mysterious restrictions on model numbers, and legend says the last copy of the MONAD documentation was eaten by a tanuki. You'll need to figure out what MONAD does some other way.
 
 To enable as many submarine features as possible, find the largest valid fourteen-digit model number that contains no 0 digits. What is the largest model number accepted by MONAD?
+
+
+--- Part Two ---
+As the submarine starts booting up things like the Retro Encabulator, you realize that maybe you don't need all these submarine features after all.
+
+What is the smallest model number accepted by MONAD?
 """
