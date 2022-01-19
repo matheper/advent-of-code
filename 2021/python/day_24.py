@@ -1,3 +1,8 @@
+from asyncio.proactor_events import constants
+from itertools import product
+from timeit import repeat
+
+
 def parse_input():
     input_data = []
     with open("2021/inputs/day_24.txt") as input_file:
@@ -88,8 +93,34 @@ def part_1(input_data):
     mul y x         w  1         w+12  26z
     add z y         w  1         w+12  26z+w+12
 
+    The possible operations are:
+    increase z -> 26z+w+12
+    decrease z -> z/26                  condition: (z % 26) - 11 = w
+    to discard -> 26*(z/26)+w+7
+
+    Conditions are applied digit by digit (inp w for each block of instructions)
     """
-    pass
+    values = []
+    for i in range(0, len(input_data), 18):
+        values.append((input_data[i + 5][2], input_data[i + 15][2]))
+
+    numbers = product(range(9, 0, -1), repeat=7)
+    for digits in numbers:
+        digits = iter(digits)
+        pin = [0 if v < 9 else next(digits) for v, _ in values]
+        z = 0
+        for i, w in enumerate(pin):
+            v1, v2 = values[i]
+            if v1 > 9:
+                z = z * 26 + w + v2
+            else:
+                pin[i] = (z % 26) + v1
+                if not (0 < pin[i] < 10):
+                    break
+                z = z // 26
+        if z == 0:
+            return ''.join(map(str, pin))
+    
 
 def part_2(input_data):
     pass
@@ -98,6 +129,8 @@ def part_2(input_data):
 def main():
     input_data = parse_input()
 
+    # print(f"part_1: {part_1_forever(input_data)}")
+    
     print(f"part_1: {part_1(input_data)}")
     print(f"part_2: {part_2(input_data)}")
 
